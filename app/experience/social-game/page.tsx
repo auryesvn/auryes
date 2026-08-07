@@ -492,23 +492,24 @@ function SocialGameExperience() {
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+            <div className="sticky top-0 z-20 mx-auto w-full max-w-md bg-[#090909] pb-3">
+              <button
+                type="button"
+                onClick={clearFavoriteCard}
+                aria-pressed={favoriteCardId === null}
+                className={`min-h-12 w-full rounded-lg border px-4 text-center text-sm outline-none hover:border-white/30 hover:text-stone-100 focus-visible:ring-2 focus-visible:ring-amber-200 ${
+                  favoriteCardId === null
+                    ? "border-stone-200 bg-stone-100 text-stone-950"
+                    : "border-white/15 bg-[#090909] text-stone-400"
+                }`}
+              >
+                Không nhớ / không chọn được
+              </button>
+            </div>
+
             <fieldset className="mx-auto w-full max-w-md">
               <legend className="sr-only">Chọn lá bài yêu thích</legend>
               <div className="space-y-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-                <label className="relative block">
-                  <input
-                    className="peer sr-only"
-                    type="radio"
-                    name="favoriteCardPicker"
-                    value=""
-                    checked={favoriteCardId === null}
-                    onChange={clearFavoriteCard}
-                  />
-                  <span className="flex min-h-12 cursor-pointer items-center justify-center rounded-lg border border-white/15 px-4 text-center text-sm text-stone-400 outline-none hover:border-white/30 hover:text-stone-100 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-200">
-                    Không nhớ / không chọn được
-                  </span>
-                </label>
-
                 {SOCIAL_GAME_CARDS.map((card) => (
                   <label key={card.id} className="relative block min-w-0">
                     <input
