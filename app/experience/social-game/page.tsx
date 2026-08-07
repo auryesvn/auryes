@@ -22,6 +22,12 @@ type FeedbackRequest = {
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
 
+function renderCardContent(content: string) {
+  return content.split("**").map((segment, index) =>
+    index % 2 === 1 ? <strong key={index}>{segment}</strong> : segment,
+  );
+}
+
 function normalizeContext(value: string | null) {
   if (!value) return null;
 
@@ -201,8 +207,8 @@ function SocialGameExperience() {
               Không nhớ hoặc không chọn được cũng không sao.
             </p>
 
-            <div className="mt-5 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
-              <label className="relative min-[360px]:col-span-2">
+            <div className="mt-5 grid grid-cols-1 gap-3">
+              <label className="relative">
                 <input
                   className="peer sr-only"
                   type="radio"
@@ -233,12 +239,15 @@ function SocialGameExperience() {
                       setError("");
                     }}
                   />
-                  <span className="flex min-h-20 cursor-pointer flex-col justify-between gap-2 rounded-lg border border-white/12 p-3 text-left transition-colors duration-150 hover:border-white/30 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
-                    <span className="font-mono text-[0.65rem] tracking-[0.18em] text-stone-600 peer-checked:text-stone-500">
+                  <span className="flex min-h-full cursor-pointer flex-col gap-3 rounded-xl border border-white/12 p-4 text-left text-stone-300 transition-colors duration-150 hover:border-white/30 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
+                    <span className="font-mono text-[0.65rem] tracking-[0.18em] text-stone-600">
                       {String(card.id).padStart(2, "0")}
                     </span>
-                    <span className="break-words text-xs font-medium leading-4 tracking-[0.025em]">
+                    <span className="break-words text-sm font-semibold leading-5 tracking-[0.025em]">
                       {card.title}
+                    </span>
+                    <span className="whitespace-pre-line break-words text-sm leading-6 text-inherit [&_strong]:font-semibold">
+                      {renderCardContent(card.fullContent)}
                     </span>
                   </span>
                 </label>
