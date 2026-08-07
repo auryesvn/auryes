@@ -262,7 +262,7 @@ function SocialGameExperience() {
               id="favorite-card-heading"
               className="text-xl font-medium tracking-[-0.025em]"
             >
-              Lá nào mày thích nhất tối nay?
+              Lá nào cậu thích nhất tối nay?
             </h2>
             <p className="mt-2 text-sm leading-6 text-stone-500">
               Không nhớ hoặc không chọn được cũng không sao.
@@ -322,7 +322,7 @@ function SocialGameExperience() {
                 htmlFor="favorite-card-reason"
                 className="block text-base leading-6 text-stone-300"
               >
-                Vì sao mày thích lá này?
+                Vì sao cậu thích lá này?
               </label>
               <textarea
                 ref={favoriteReasonRef}
@@ -478,7 +478,7 @@ function SocialGameExperience() {
                   id="card-picker-title"
                   className="mt-1 text-lg font-semibold tracking-[-0.025em]"
                 >
-                  Chọn lá mày thích nhất
+                  Chọn lá cậu thích nhất
                 </h2>
               </div>
               <button
