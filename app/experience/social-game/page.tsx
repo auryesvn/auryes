@@ -3,12 +3,14 @@
 import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type LocalFeedback = {
-  box: string | null;
-  event: string | null;
+type FeedbackRequest = {
+  boxCode: string;
+  eventCode: string;
   rating: number;
   memorableMoment: string;
-  wantsReturn: boolean;
+  playAgain: boolean;
+  instagramHandle: string;
+  reconnectConsent: boolean;
 };
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
@@ -16,8 +18,12 @@ const RATINGS = [1, 2, 3, 4, 5] as const;
 function normalizeContext(value: string | null) {
   if (!value) return null;
 
-  const normalized = value.trim().slice(0, 80);
-  return /^[a-zA-Z0-9_-]+$/.test(normalized) ? normalized : null;
+  if (value.length > 64) return null;
+
+  const normalized = value.trim();
+  return /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(normalized)
+    ? normalized
+    : null;
 }
 
 function SocialGameExperience() {
@@ -25,8 +31,12 @@ function SocialGameExperience() {
   const [rating, setRating] = useState<number | null>(null);
   const [memorableMoment, setMemorableMoment] = useState("");
   const [wantsReturn, setWantsReturn] = useState<boolean | null>(null);
+  const [instagramHandle, setInstagramHandle] = useState("");
+  const [reconnectConsent, setReconnectConsent] = useState(false);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedWithConsent, setSubmittedWithConsent] = useState(false);
 
   const context = useMemo(
     () => ({
@@ -36,25 +46,58 @@ function SocialGameExperience() {
     [searchParams],
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (pending) return;
 
     if (rating === null || wantsReturn === null) {
       setError("Chọn một câu trả lời cho cả hai câu hỏi nhé.");
       return;
     }
 
-    const feedback: LocalFeedback = {
-      ...context,
+    if (!context.box || !context.event) {
+      setError("Không thể xác định hộp hoặc lần chơi này.");
+      return;
+    }
+
+    if (reconnectConsent && !instagramHandle.trim().replace(/^@/, "")) {
+      setError("Thêm Instagram nếu bạn muốn được tìm lại nhé.");
+      return;
+    }
+
+    const feedback: FeedbackRequest = {
+      boxCode: context.box,
+      eventCode: context.event,
       rating,
       memorableMoment: memorableMoment.trim(),
-      wantsReturn,
+      playAgain: wantsReturn,
+      instagramHandle: instagramHandle.trim(),
+      reconnectConsent,
     };
 
-    // V0 intentionally keeps feedback local. This payload is the future POST boundary.
-    void feedback;
     setError("");
-    setSubmitted(true);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/social-game-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(feedback),
+      });
+
+      if (!response.ok) {
+        setError("Chưa gửi được. Thử lại một lần nữa nhé.");
+        return;
+      }
+
+      setSubmittedWithConsent(reconnectConsent);
+      setSubmitted(true);
+    } catch {
+      setError("Chưa gửi được. Kiểm tra kết nối rồi thử lại nhé.");
+    } finally {
+      setPending(false);
+    }
   }
 
   if (submitted) {
@@ -78,7 +121,9 @@ function SocialGameExperience() {
             SEE YOU IN ANOTHER ROOM.
           </h1>
           <p className="mx-auto mt-5 max-w-xs text-base leading-7 text-stone-400">
-            Có thể cái hộp này sẽ nhớ bạn.
+            {submittedWithConsent
+              ? "Nếu cái hộp có chương tiếp theo, có thể nó sẽ tìm được bạn."
+              : "Có thể chúng ta sẽ gặp lại."}
           </p>
         </section>
       </main>
@@ -187,6 +232,53 @@ function SocialGameExperience() {
             </div>
           </fieldset>
 
+          <div className="space-y-5 border-t border-white/10 pt-10">
+            <div>
+              <label
+                htmlFor="instagram-handle"
+                className="block text-base leading-6 text-stone-300"
+              >
+                Nếu cái hộp có phần tiếp theo, tao có thể tìm bạn ở đâu?
+              </label>
+              <input
+                id="instagram-handle"
+                name="instagramHandle"
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={31}
+                value={instagramHandle}
+                onChange={(event) => {
+                  setInstagramHandle(event.target.value);
+                  setError("");
+                }}
+                placeholder="@instagram"
+                className="mt-4 block min-h-12 w-full rounded-xl border border-white/12 bg-white/[0.035] px-4 py-3 text-base text-stone-100 outline-none placeholder:text-stone-600 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/20"
+              />
+            </div>
+
+            <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-stone-300">
+              <input
+                type="checkbox"
+                name="reconnectConsent"
+                checked={reconnectConsent}
+                onChange={(event) => {
+                  setReconnectConsent(event.target.checked);
+                  setError("");
+                }}
+                className="mt-1 size-4 shrink-0 accent-stone-100 outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090909]"
+              />
+              <span>
+                Cho phép tao tìm lại bạn nếu cái hộp có phần tiếp theo.
+              </span>
+            </label>
+
+            <p className="text-xs leading-5 text-stone-500">
+              Không bắt buộc. Chỉ dùng để kết nối lại quanh những lần chơi sau.
+            </p>
+          </div>
+
           <div>
             {error && (
               <p
@@ -199,10 +291,12 @@ function SocialGameExperience() {
             )}
             <button
               type="submit"
+              disabled={pending}
+              aria-busy={pending}
               aria-describedby={error ? "form-error" : undefined}
-              className="min-h-12 w-full rounded-lg bg-[#ede9df] px-5 py-3 text-sm font-semibold text-stone-950 outline-none transition-colors duration-150 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200 active:bg-stone-300 motion-reduce:transition-none"
+              className="min-h-12 w-full rounded-lg bg-[#ede9df] px-5 py-3 text-sm font-semibold text-stone-950 outline-none transition-colors duration-150 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-amber-200 active:bg-stone-300 disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
             >
-              Gửi
+              {pending ? "Đang gửi..." : "Gửi"}
             </button>
           </div>
         </form>
