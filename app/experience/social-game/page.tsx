@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, Suspense, useMemo, useState } from "react";
+import {
+  FormEvent,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -43,6 +50,7 @@ function SocialGameExperience() {
   const [favoriteCardId, setFavoriteCardId] =
     useState<SocialGameCardId | null>(null);
   const [favoriteCardReason, setFavoriteCardReason] = useState("");
+  const [cardPickerOpen, setCardPickerOpen] = useState(false);
   const [memorableMoment, setMemorableMoment] = useState("");
   const [wantsReturn, setWantsReturn] = useState<boolean | null>(null);
   const [instagramHandle, setInstagramHandle] = useState("");
@@ -51,6 +59,10 @@ function SocialGameExperience() {
   const [pending, setPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submittedWithConsent, setSubmittedWithConsent] = useState(false);
+  const cardPickerRef = useRef<HTMLDialogElement>(null);
+  const cardPickerCloseRef = useRef<HTMLButtonElement>(null);
+  const cardPickerTriggerRef = useRef<HTMLButtonElement>(null);
+  const favoriteReasonRef = useRef<HTMLTextAreaElement>(null);
 
   const context = useMemo(
     () => ({
@@ -59,6 +71,49 @@ function SocialGameExperience() {
     }),
     [searchParams],
   );
+
+  const selectedCard = SOCIAL_GAME_CARDS.find(
+    (card) => card.id === favoriteCardId,
+  );
+
+  useEffect(() => {
+    const dialog = cardPickerRef.current;
+    if (!dialog || !cardPickerOpen) return;
+
+    const trigger = cardPickerTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+    const focusFrame = requestAnimationFrame(() =>
+      cardPickerCloseRef.current?.focus(),
+    );
+
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      if (dialog.open) dialog.close();
+      trigger?.focus();
+    };
+  }, [cardPickerOpen]);
+
+  function clearFavoriteCard() {
+    const wasPickerOpen = cardPickerOpen;
+    setFavoriteCardId(null);
+    setFavoriteCardReason("");
+    setCardPickerOpen(false);
+    setError("");
+
+    if (wasPickerOpen) {
+      setTimeout(() => cardPickerTriggerRef.current?.focus(), 0);
+    }
+  }
+
+  function selectFavoriteCard(cardId: SocialGameCardId) {
+    setFavoriteCardId(cardId);
+    setCardPickerOpen(false);
+    setError("");
+    setTimeout(() => favoriteReasonRef.current?.focus(), 0);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -199,61 +254,64 @@ function SocialGameExperience() {
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend className="text-xl font-medium tracking-[-0.025em]">
+          <section aria-labelledby="favorite-card-heading">
+            <h2
+              id="favorite-card-heading"
+              className="text-xl font-medium tracking-[-0.025em]"
+            >
               Lá nào mày thích nhất tối nay?
-            </legend>
+            </h2>
             <p className="mt-2 text-sm leading-6 text-stone-500">
               Không nhớ hoặc không chọn được cũng không sao.
             </p>
 
-            <div className="mt-5 grid grid-cols-1 gap-3">
-              <label className="relative">
-                <input
-                  className="peer sr-only"
-                  type="radio"
-                  name="favoriteCardId"
-                  value=""
-                  checked={favoriteCardId === null}
-                  onChange={() => {
-                    setFavoriteCardId(null);
-                    setFavoriteCardReason("");
-                    setError("");
-                  }}
-                />
-                <span className="flex min-h-12 cursor-pointer items-center justify-center rounded-lg border border-white/12 px-4 text-center text-sm text-stone-400 transition-colors duration-150 hover:border-white/30 hover:text-stone-100 peer-checked:border-stone-300 peer-checked:bg-white/10 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
-                  Không nhớ / không chọn được
-                </span>
-              </label>
-
-              {SOCIAL_GAME_CARDS.map((card) => (
-                <label key={card.id} className="relative min-w-0">
-                  <input
-                    className="peer sr-only"
-                    type="radio"
-                    name="favoriteCardId"
-                    value={card.id}
-                    checked={favoriteCardId === card.id}
-                    onChange={() => {
-                      setFavoriteCardId(card.id);
-                      setError("");
-                    }}
-                  />
-                  <span className="flex min-h-full cursor-pointer flex-col gap-3 rounded-xl border border-white/12 p-4 text-left text-stone-300 transition-colors duration-150 hover:border-white/30 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
-                    <span className="font-mono text-[0.65rem] tracking-[0.18em] text-stone-600">
-                      {String(card.id).padStart(2, "0")}
-                    </span>
-                    <span className="break-words text-sm font-semibold leading-5 tracking-[0.025em]">
-                      {card.title}
-                    </span>
-                    <span className="whitespace-pre-line break-words text-sm leading-6 text-inherit [&_strong]:font-semibold">
-                      {renderCardContent(card.fullContent)}
-                    </span>
-                  </span>
-                </label>
-              ))}
+            <div className="mt-5 space-y-3">
+              {selectedCard ? (
+                <div className="rounded-xl border border-stone-300/40 bg-white/[0.06] p-4">
+                  <p className="text-sm leading-6 text-stone-200">
+                    Đã chọn: {String(selectedCard.id).padStart(2, "0")} —{" "}
+                    <span className="font-semibold">{selectedCard.title}</span>
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                    <button
+                      ref={cardPickerTriggerRef}
+                      type="button"
+                      onClick={() => setCardPickerOpen(true)}
+                      className="text-sm font-medium text-stone-200 underline decoration-stone-600 underline-offset-4 outline-none hover:decoration-stone-300 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-amber-200"
+                    >
+                      Đổi lá
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearFavoriteCard}
+                      className="text-sm text-stone-500 underline decoration-stone-700 underline-offset-4 outline-none hover:text-stone-300 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-amber-200"
+                    >
+                      Không nhớ / không chọn được
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={clearFavoriteCard}
+                    aria-pressed="true"
+                    className="min-h-12 rounded-lg border border-stone-300/40 bg-white/[0.06] px-3 py-2 text-sm text-stone-200 outline-none hover:border-stone-300/70 focus-visible:ring-2 focus-visible:ring-amber-200"
+                  >
+                    Không nhớ / không chọn được
+                  </button>
+                  <button
+                    ref={cardPickerTriggerRef}
+                    type="button"
+                    onClick={() => setCardPickerOpen(true)}
+                    className="min-h-12 rounded-lg border border-white/12 px-3 py-2 text-sm text-stone-300 outline-none hover:border-white/30 hover:text-white focus-visible:ring-2 focus-visible:ring-amber-200"
+                  >
+                    Xem lại 31 lá
+                  </button>
+                </div>
+              )}
             </div>
-          </fieldset>
+          </section>
 
           {favoriteCardId !== null && (
             <div>
@@ -264,6 +322,7 @@ function SocialGameExperience() {
                 Vì sao mày thích lá này?
               </label>
               <textarea
+                ref={favoriteReasonRef}
                 id="favorite-card-reason"
                 name="favoriteCardReason"
                 value={favoriteCardReason}
@@ -272,7 +331,7 @@ function SocialGameExperience() {
                 }
                 maxLength={500}
                 rows={3}
-                placeholder="Nó làm room bật lên vì..."
+                placeholder="viết gì cũng được..."
                 className="mt-4 block w-full resize-none rounded-xl border border-white/12 bg-white/[0.035] px-4 py-3.5 text-base leading-6 text-stone-100 outline-none placeholder:text-stone-600 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/20"
               />
             </div>
@@ -396,6 +455,88 @@ function SocialGameExperience() {
           </div>
         </form>
       </div>
+
+      <dialog
+        ref={cardPickerRef}
+        aria-labelledby="card-picker-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          setCardPickerOpen(false);
+        }}
+        onClose={() => setCardPickerOpen(false)}
+        className="m-0 h-dvh max-h-none w-full max-w-none overflow-hidden bg-[#090909] p-0 text-[#f0eee8] backdrop:bg-black/75"
+      >
+        <div className="flex h-full min-h-0 flex-col">
+          <header className="shrink-0 border-b border-white/10 bg-[#090909] px-5 py-4">
+            <div className="mx-auto flex w-full max-w-md items-center justify-between gap-4">
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-[0.28em] text-stone-500">
+                  31 lá
+                </p>
+                <h2
+                  id="card-picker-title"
+                  className="mt-1 text-lg font-semibold tracking-[-0.025em]"
+                >
+                  Chọn lá mày thích nhất
+                </h2>
+              </div>
+              <button
+                ref={cardPickerCloseRef}
+                type="button"
+                onClick={() => setCardPickerOpen(false)}
+                className="min-h-11 shrink-0 rounded-lg border border-white/15 px-4 text-sm text-stone-300 outline-none hover:border-white/30 hover:text-white focus-visible:ring-2 focus-visible:ring-amber-200"
+              >
+                Đóng
+              </button>
+            </div>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+            <fieldset className="mx-auto w-full max-w-md">
+              <legend className="sr-only">Chọn lá bài yêu thích</legend>
+              <div className="space-y-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                <label className="relative block">
+                  <input
+                    className="peer sr-only"
+                    type="radio"
+                    name="favoriteCardPicker"
+                    value=""
+                    checked={favoriteCardId === null}
+                    onChange={clearFavoriteCard}
+                  />
+                  <span className="flex min-h-12 cursor-pointer items-center justify-center rounded-lg border border-white/15 px-4 text-center text-sm text-stone-400 outline-none hover:border-white/30 hover:text-stone-100 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-200">
+                    Không nhớ / không chọn được
+                  </span>
+                </label>
+
+                {SOCIAL_GAME_CARDS.map((card) => (
+                  <label key={card.id} className="relative block min-w-0">
+                    <input
+                      className="peer sr-only"
+                      type="radio"
+                      name="favoriteCardPicker"
+                      value={card.id}
+                      checked={favoriteCardId === card.id}
+                      onChange={() => selectFavoriteCard(card.id)}
+                    />
+                    <span className="flex cursor-pointer flex-col gap-3 rounded-xl border border-white/12 p-4 text-left text-stone-300 outline-none hover:border-white/30 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-200">
+                      <span className="font-mono text-[0.65rem] tracking-[0.18em] text-stone-600">
+                        {String(card.id).padStart(2, "0")}
+                      </span>
+                      <span className="break-words text-sm font-semibold leading-5 tracking-[0.025em]">
+                        {card.title}
+                      </span>
+                      <span className="whitespace-pre-line break-words text-sm leading-6 text-inherit [&_strong]:font-semibold">
+                        {renderCardContent(card.fullContent)}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </dialog>
     </main>
   );
 }
