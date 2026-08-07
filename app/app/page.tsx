@@ -15,7 +15,7 @@ export default function RegistryUnavailablePage() {
           Admin access unavailable
         </h1>
         <p className="mt-4 text-base leading-7 text-stone-400">
-          This registry interface is not publicly available. dd
+          This registry interface is not publicly available. dddd
         </p>
       </section>
     </main>
