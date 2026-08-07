@@ -3,10 +3,17 @@
 import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import {
+  SOCIAL_GAME_CARDS,
+  type SocialGameCardId,
+} from "@/lib/social-game-cards";
+
 type FeedbackRequest = {
   boxCode: string;
   eventCode: string;
   rating: number;
+  favoriteCardId: SocialGameCardId | null;
+  favoriteCardReason: string;
   memorableMoment: string;
   playAgain: boolean;
   instagramHandle: string;
@@ -21,14 +28,15 @@ function normalizeContext(value: string | null) {
   if (value.length > 64) return null;
 
   const normalized = value.trim();
-  return /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(normalized)
-    ? normalized
-    : null;
+  return /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(normalized) ? normalized : null;
 }
 
 function SocialGameExperience() {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState<number | null>(null);
+  const [favoriteCardId, setFavoriteCardId] =
+    useState<SocialGameCardId | null>(null);
+  const [favoriteCardReason, setFavoriteCardReason] = useState("");
   const [memorableMoment, setMemorableMoment] = useState("");
   const [wantsReturn, setWantsReturn] = useState<boolean | null>(null);
   const [instagramHandle, setInstagramHandle] = useState("");
@@ -70,6 +78,8 @@ function SocialGameExperience() {
       boxCode: context.box,
       eventCode: context.event,
       rating,
+      favoriteCardId,
+      favoriteCardReason: favoriteCardReason.trim(),
       memorableMoment: memorableMoment.trim(),
       playAgain: wantsReturn,
       instagramHandle: instagramHandle.trim(),
@@ -183,6 +193,82 @@ function SocialGameExperience() {
             </div>
           </fieldset>
 
+          <fieldset>
+            <legend className="text-xl font-medium tracking-[-0.025em]">
+              Lá nào mày thích nhất tối nay?
+            </legend>
+            <p className="mt-2 text-sm leading-6 text-stone-500">
+              Không nhớ hoặc không chọn được cũng không sao.
+            </p>
+
+            <div className="mt-5 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+              <label className="relative min-[360px]:col-span-2">
+                <input
+                  className="peer sr-only"
+                  type="radio"
+                  name="favoriteCardId"
+                  value=""
+                  checked={favoriteCardId === null}
+                  onChange={() => {
+                    setFavoriteCardId(null);
+                    setFavoriteCardReason("");
+                    setError("");
+                  }}
+                />
+                <span className="flex min-h-12 cursor-pointer items-center justify-center rounded-lg border border-white/12 px-4 text-center text-sm text-stone-400 transition-colors duration-150 hover:border-white/30 hover:text-stone-100 peer-checked:border-stone-300 peer-checked:bg-white/10 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
+                  Không nhớ / không chọn được
+                </span>
+              </label>
+
+              {SOCIAL_GAME_CARDS.map((card) => (
+                <label key={card.id} className="relative min-w-0">
+                  <input
+                    className="peer sr-only"
+                    type="radio"
+                    name="favoriteCardId"
+                    value={card.id}
+                    checked={favoriteCardId === card.id}
+                    onChange={() => {
+                      setFavoriteCardId(card.id);
+                      setError("");
+                    }}
+                  />
+                  <span className="flex min-h-20 cursor-pointer flex-col justify-between gap-2 rounded-lg border border-white/12 p-3 text-left transition-colors duration-150 hover:border-white/30 peer-checked:border-stone-200 peer-checked:bg-stone-100 peer-checked:text-stone-950 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-amber-200 motion-reduce:transition-none">
+                    <span className="font-mono text-[0.65rem] tracking-[0.18em] text-stone-600 peer-checked:text-stone-500">
+                      {String(card.id).padStart(2, "0")}
+                    </span>
+                    <span className="break-words text-xs font-medium leading-4 tracking-[0.025em]">
+                      {card.title}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {favoriteCardId !== null && (
+            <div>
+              <label
+                htmlFor="favorite-card-reason"
+                className="block text-base leading-6 text-stone-300"
+              >
+                Vì sao mày thích lá này?
+              </label>
+              <textarea
+                id="favorite-card-reason"
+                name="favoriteCardReason"
+                value={favoriteCardReason}
+                onChange={(event) =>
+                  setFavoriteCardReason(event.target.value)
+                }
+                maxLength={500}
+                rows={3}
+                placeholder="Nó làm room bật lên vì..."
+                className="mt-4 block w-full resize-none rounded-xl border border-white/12 bg-white/[0.035] px-4 py-3.5 text-base leading-6 text-stone-100 outline-none placeholder:text-stone-600 focus:border-stone-400 focus:ring-2 focus:ring-stone-300/20"
+              />
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="memorable-moment"
@@ -238,7 +324,7 @@ function SocialGameExperience() {
                 htmlFor="instagram-handle"
                 className="block text-base leading-6 text-stone-300"
               >
-                Nếu cái hộp có phần tiếp theo, tao có thể tìm bạn ở đâu?
+                Nếu cái hộp có phần tiếp theo, mình có thể tìm bạn ở đâu?
               </label>
               <input
                 id="instagram-handle"

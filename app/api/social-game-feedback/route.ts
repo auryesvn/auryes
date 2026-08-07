@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getServerSupabase } from "@/lib/supabase-server";
+import { isSocialGameCardId } from "@/lib/social-game-cards";
 
 const MAX_REQUEST_BYTES = 4_096;
 const MAX_IDENTIFIER_LENGTH = 64;
 const MAX_MOMENT_LENGTH = 800;
+const MAX_CARD_REASON_LENGTH = 500;
 const MAX_INSTAGRAM_LENGTH = 30;
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const INSTAGRAM_PATTERN = /^[A-Za-z0-9._]+$/;
@@ -12,6 +14,8 @@ const REQUEST_KEYS = new Set([
   "boxCode",
   "eventCode",
   "rating",
+  "favoriteCardId",
+  "favoriteCardReason",
   "memorableMoment",
   "playAgain",
   "instagramHandle",
@@ -42,6 +46,15 @@ function parseIdentifier(value: unknown) {
 function parseOptionalMoment(value: unknown) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || value.length > MAX_MOMENT_LENGTH) {
+    return undefined;
+  }
+
+  return value.trim() || null;
+}
+
+function parseOptionalCardReason(value: unknown) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || value.length > MAX_CARD_REASON_LENGTH) {
     return undefined;
   }
 
@@ -99,6 +112,13 @@ export async function POST(request: Request) {
 
   const boxCode = parseIdentifier(body.boxCode);
   const eventCode = parseIdentifier(body.eventCode);
+  const favoriteCardId =
+    body.favoriteCardId === null && body.favoriteCardId !== undefined
+      ? null
+      : isSocialGameCardId(body.favoriteCardId)
+        ? body.favoriteCardId
+        : undefined;
+  const favoriteCardReason = parseOptionalCardReason(body.favoriteCardReason);
   const memorableMoment = parseOptionalMoment(body.memorableMoment);
   const instagramHandle = parseOptionalInstagram(body.instagramHandle);
 
@@ -108,6 +128,8 @@ export async function POST(request: Request) {
     !Number.isInteger(body.rating) ||
     (body.rating as number) < 1 ||
     (body.rating as number) > 5 ||
+    favoriteCardId === undefined ||
+    favoriteCardReason === undefined ||
     typeof body.playAgain !== "boolean" ||
     typeof body.reconnectConsent !== "boolean" ||
     memorableMoment === undefined ||
@@ -123,6 +145,9 @@ export async function POST(request: Request) {
       box_code: boxCode,
       event_code: eventCode,
       rating: body.rating as number,
+      favorite_card_id: favoriteCardId,
+      favorite_card_reason:
+        favoriteCardId === null ? null : favoriteCardReason,
       memorable_moment: memorableMoment,
       play_again: body.playAgain,
       instagram_handle: body.reconnectConsent ? instagramHandle : null,
