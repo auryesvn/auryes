@@ -30,9 +30,11 @@ type FeedbackRequest = {
 const RATINGS = [1, 2, 3, 4, 5] as const;
 
 function renderCardContent(content: string) {
-  return content.split("**").map((segment, index) =>
-    index % 2 === 1 ? <strong key={index}>{segment}</strong> : segment,
-  );
+  return content
+    .split("**")
+    .map((segment, index) =>
+      index % 2 === 1 ? <strong key={index}>{segment}</strong> : segment,
+    );
 }
 
 function normalizeContext(value: string | null) {
@@ -47,8 +49,9 @@ function normalizeContext(value: string | null) {
 function SocialGameExperience() {
   const searchParams = useSearchParams();
   const [rating, setRating] = useState<number | null>(null);
-  const [favoriteCardId, setFavoriteCardId] =
-    useState<SocialGameCardId | null>(null);
+  const [favoriteCardId, setFavoriteCardId] = useState<SocialGameCardId | null>(
+    null,
+  );
   const [favoriteCardReason, setFavoriteCardReason] = useState("");
   const [cardPickerOpen, setCardPickerOpen] = useState(false);
   const [memorableMoment, setMemorableMoment] = useState("");
@@ -326,9 +329,7 @@ function SocialGameExperience() {
                 id="favorite-card-reason"
                 name="favoriteCardReason"
                 value={favoriteCardReason}
-                onChange={(event) =>
-                  setFavoriteCardReason(event.target.value)
-                }
+                onChange={(event) => setFavoriteCardReason(event.target.value)}
                 maxLength={500}
                 rows={3}
                 placeholder="viết gì cũng được..."
@@ -424,7 +425,7 @@ function SocialGameExperience() {
                 className="mt-1 size-4 shrink-0 accent-stone-100 outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#090909]"
               />
               <span>
-                Cho phép tao tìm lại bạn nếu cái hộp có phần tiếp theo.
+                Cho phép mình tìm lại bạn nếu cái hộp có phần tiếp theo.
               </span>
             </label>
 
