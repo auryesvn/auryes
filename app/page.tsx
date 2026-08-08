@@ -153,6 +153,16 @@ export default function HomePage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center py-20 text-center">
+          <div className="relative mb-12 aspect-square w-[clamp(10.5rem,28vw,17.5rem)] overflow-hidden rounded-full border border-[#8c7054]/25 shadow-[0_0_70px_rgba(139,105,70,0.12)]">
+            <Image
+              src="/logo.jpg"
+              fill
+              priority
+              sizes="(max-width: 640px) 168px, (max-width: 1024px) 28vw, 280px"
+              alt="Auryes mark"
+              className="scale-[1.42] object-cover object-[50%_42%]"
+            />
+          </div>
           <h1 className="text-[clamp(4.3rem,18vw,12.5rem)] font-medium leading-[0.78] tracking-[-0.085em] text-[#eee4d4]">
             AURYES
           </h1>
