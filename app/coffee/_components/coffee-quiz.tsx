@@ -24,13 +24,38 @@ const VERDICTS: Record<VerdictKey, { title: string; paragraphs: string[] }> = {
   friend_like: { title: "Nghe hơi giống đồng bọn hơn.", paragraphs: ["Có thể nói chuyện, chơi hoặc làm vài thứ cùng nhau vẫn rất vui.", "Còn có bật sang “mode người yêu” không thì web chịu."] },
   different_system: { title: "Có vẻ hơi khác hệ.", paragraphs: ["Không phải ai sai cả.", "Chỉ là có vài chỗ nếu bước vào một mối quan hệ thật thì hai người có thể phải tốn khá nhiều công để khớp với nhau."] },
 };
-const PROFILES: Record<ProfileKey, { title: string; body: string }> = {
-  closeness: { title: "Bạn có vẻ thích sự gần gũi, nhưng không cần hai người dính vào nhau.", body: "Khi mệt hoặc có chuyện, bạn vẫn muốn có một người đủ gần để kéo vào cùng nghĩ hoặc đơn giản là ở cạnh." },
-  practical: { title: "Bạn khá thực tế.", body: "Một ý tưởng nghe hay chưa chắc đã đủ. Bạn có xu hướng quan tâm đến việc nó có chạy được ngoài đời không." },
-  mutual_respect: { title: "Bạn khá thoải mái với việc người kia giỏi hơn mình ở một vài thứ.", body: "Thậm chí điều đó còn làm mối quan hệ thú vị hơn vì vẫn còn thứ để hỏi, để học và để nể." },
-  novelty: { title: "Bạn thích một mối quan hệ có chuyển động.", body: "Không nhất thiết lúc nào cũng phải đi đâu đó, nhưng bạn có vẻ thích việc cả hai đều mang thêm trò mới, góc nhìn mới hoặc trải nghiệm mới vào." },
-  presence: { title: "Bạn coi trọng sự hiện diện.", body: "Một người rất giỏi nhưng quá ít có mặt chưa chắc đã làm bạn thấy đủ gần." },
-  limits: { title: "Bạn có vẻ khá rõ về ranh giới.", body: "Không cần hai người hiểu nhau hoàn hảo ngay từ đầu, nhưng khi một điều đã được nói rõ thì bạn mong cả hai biết điều chỉnh." },
+type ProfileCopy = {
+  strong: { title: string; body: string };
+  weak: { title: string; body: string };
+};
+
+type VerdictSupportCopy = { title: string; body: string };
+
+const PROFILES: Record<ProfileKey, ProfileCopy> = {
+  closeness: {
+    strong: { title: "Bạn thích có một người đủ gần để kéo vào cùng.", body: "Có vẻ sự gần gũi với bạn không nhất thiết là hai người phải làm mọi thứ cùng nhau. Điều đáng quý hơn là khi có chuyện, cả hai có thể tự nhiên tìm đến nhau để chia sẻ một ý nghĩ, một cảm xúc hoặc đơn giản là ngồi cạnh. Vẫn có khoảng riêng, nhưng không phải hai thế giới đóng kín." },
+    weak: { title: "Có một chút cảm giác là bạn thích có người ở cạnh khi cần.", body: "Ít nhất trong một tình huống vừa rồi, bạn nghiêng về việc kéo người kia lại gần thay vì luôn tự xử lý mọi thứ. Chưa đủ để nói bạn cần gần gũi đến đâu; có lẽ điều quan trọng hơn là người ấy biết lúc nào nên bước vào." },
+  },
+  practical: {
+    strong: { title: "Bạn có vẻ khá thực tế.", body: "Một ý tưởng nghe hay chưa chắc đã đủ với bạn; bạn còn muốn xem nó chạy ngoài đời thế nào. Nếu thấy một chỗ chưa ổn, bạn có xu hướng cùng người kia bóc ra thay vì chỉ gật đầu cho vui. Với người hơi mơ mộng, đôi lúc cách này có thể làm mất hứng một chút; với đúng người, nó lại giúp cả hai đứng vững hơn." },
+    weak: { title: "Qua một câu trả lời, bạn có vẻ để ý đến tính thực tế.", body: "Có một chút cảm giác là bạn không chỉ nghe xem một điều có hấp dẫn hay không, mà còn nhìn xem nó có làm được thật không. Đây mới là một dấu hiệu nhỏ, nên cũng có thể tùy chuyện bạn mới bật phần này lên." },
+  },
+  mutual_respect: {
+    strong: { title: "Bạn có vẻ thích một người vẫn còn điều để mình nể.", body: "Việc người kia giỏi hơn ở một vài thứ không nhất thiết làm bạn khó chịu; nó có thể trở thành lý do để hỏi, để học và để tiếp tục tò mò. Về lâu dài, cảm giác tôn trọng phán đoán của nhau có lẽ quan trọng với bạn không kém chuyện hợp sở thích. Không cần ai hơn ai, chỉ cần cả hai vẫn thấy lời của người kia đáng nghe." },
+    weak: { title: "Có vẻ bạn khá mở với việc nghe phán đoán của người kia.", body: "Ít nhất qua một lựa chọn, bạn không xem việc dựa vào góc nhìn của người khác là mất đi phần độc lập của mình. Chưa chắc điều này đúng trong mọi lĩnh vực, nhưng có vẻ bạn vẫn chừa chỗ cho sự nể phục và học hỏi." },
+  },
+  novelty: {
+    strong: { title: "Bạn thích một mối quan hệ vẫn có chuyển động.", body: "Chuyển động ở đây không nhất thiết là lúc nào cũng phải ra ngoài hay làm điều thật lớn. Hai người ở nhà mà vẫn nghĩ ra trò, kéo nhau vào một câu chuyện mới hoặc luân phiên mang thêm trải nghiệm vào cũng đã đủ vui. Có vẻ bạn muốn cả hai cùng góp phần để mối quan hệ không chỉ chạy bằng quán tính." },
+    weak: { title: "Có một chút cảm giác là bạn thích mối quan hệ có thêm điều mới.", body: "Một lựa chọn của bạn gợi ý rằng đôi lúc bạn muốn có trò mới, góc nhìn mới hoặc một lời rủ bất ngờ. Nhưng đây chưa phải dấu hiệu mạnh; sự quen thuộc và yên ổn có thể vẫn quan trọng với bạn ở những lúc khác." },
+  },
+  presence: {
+    strong: { title: "Bạn vẫn cần một sự hiện diện có ý nghĩa.", body: "Có đời sống riêng không có nghĩa là người kia có thể gần như biến mất khỏi cuộc sống của bạn. Một người rất thú vị nhưng luôn quá bận có lẽ vẫn để lại cảm giác hơi trống. Không phải đếm số giờ ở cạnh nhau; có vẻ điều bạn cần là cảm giác họ thật sự có mặt khi hai người đang ở bên nhau." },
+    weak: { title: "Ít nhất qua mấy câu vừa rồi, sự có mặt của người kia có vẻ vẫn quan trọng với bạn.", body: "Có một lựa chọn cho thấy độc lập chưa chắc thay thế được cảm giác được ở cạnh nhau khi cần. Chưa đủ để biết bạn muốn gặp nhau nhiều hay ít; có lẽ chất lượng của sự hiện diện mới là phần đáng để ý." },
+  },
+  limits: {
+    strong: { title: "Bạn có vẻ sẵn sàng nói chuyện rõ ràng về giới hạn.", body: "Bạn không nhất thiết chờ hai người tự hiểu nhau hoàn hảo, cũng không coi mọi giới hạn là thứ khỏi cần bàn. Có vẻ cách hợp với bạn hơn là cùng nói xem điều gì hợp lý, rồi tôn trọng những gì đã được làm rõ. Khi gần một người khác, kiểu trao đổi này có thể giúp cả hai điều chỉnh mà không phải đoán ý nhau mãi." },
+    weak: { title: "Có vẻ bạn muốn những giới hạn được nói ra thay vì đoán mò.", body: "Một câu trả lời cho thấy bạn nghiêng về việc dừng lại, trao đổi hoặc điều chỉnh khi có chỗ khiến người kia không ổn. Đây chỉ là một lát cắt nhỏ; ít nhất nó cho thấy bạn không mặc định rằng yêu nhau thì phải tự động đồng ý mọi thứ." },
+  },
 };
 
 type Stage = "intro" | "address" | "questions" | "identity" | "result";
@@ -96,13 +121,37 @@ export default function CoffeeQuiz() {
     const result = computeCoffeeResult(answers as CoffeeAnswers); const verdict = VERDICTS[result.verdictKey];
     const uncertainFirst = addressMode === "anh_em" && result.verdictKey === "uncertain" ? "Có vài điểm khiến anh thấy tò mò về em, nhưng từng này câu hỏi vẫn chưa đủ để biết hai người có thực sự hợp nhau không." : verdict.paragraphs[0];
     const adapt = (text: string) => addressMode === "cau_minh" ? text.replaceAll("Bạn", "Cậu").replaceAll("bạn", "cậu") : addressMode === "anh_em" ? text.replaceAll("Bạn", "Em").replaceAll("bạn", "em") : text;
-    const observationTitle = (key: ProfileKey) => {
-      const title = adapt(PROFILES[key].title);
-      if (profileEvidenceCount(answers as CoffeeAnswers, key) >= 2) return title;
-      const lower = title.charAt(0).toLocaleLowerCase("vi") + title.slice(1);
-      return `Có vẻ ${lower}`;
+    const observationCopy = (key: ProfileKey) => {
+      const confidence = profileEvidenceCount(answers as CoffeeAnswers, key) >= 2 ? "strong" : "weak";
+      return PROFILES[key][confidence];
     };
-    return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={`${shell} py-12`}><p className={eyebrow}>Kết quả / {name.trim()}</p><section className="mt-12"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(2.8rem,12vw,5rem)] leading-[0.95]">{verdict.title}</h1><div className="mt-9 space-y-4 text-base leading-7 text-[#b9a994]"><p>{uncertainFirst}</p>{verdict.paragraphs.slice(1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section><section className="mt-16 border-t border-white/10 pt-10"><p className={eyebrow}>Một chút về {addressMode === "anh_em" ? "em" : addressMode === "cau_minh" ? "cậu" : "bạn"}</p><div className="mt-7 space-y-10">{result.profileKeys.map((key) => <article key={key}><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{observationTitle(key)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(PROFILES[key].body)}</p></article>)}</div></section><aside aria-live="polite" className="mt-16 border-t border-white/10 pt-7 text-sm text-[#8d7660]">{sendState === "sending" && <p>Đang gửi cho Kai…</p>}{sendState === "sent" && <p className="text-[#bda88d]">Kai nhận được rồi :)</p>}{sendState === "failed" && <div><p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p><button onClick={() => submit()} className="mt-4 min-h-11 rounded-lg border border-white/20 px-4 text-[#d2c6b6] outline-none hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#d9b98e]">Thử gửi lại</button></div>}</aside></div></main>;
+    const verdictSupport = (() : VerdictSupportCopy | null => {
+      if (result.verdictKey === "friend_like") {
+        return {
+          title: "Chưa thấy quá nhiều chất ‘người yêu’ trong mấy câu này.",
+          body: "Bạn vẫn có vẻ là kiểu người có thể nói chuyện, chơi và tìm thấy thứ để nể ở người kia. Nhưng qua mấy câu vừa rồi, chưa có nhiều dấu hiệu cho thấy bạn đặc biệt cần kiểu gần gũi mang màu sắc người yêu. Cái này web cũng khó đoán; đôi khi gặp đúng người thì nó mới bật.",
+        };
+      }
+      if (result.verdictKey !== "different_system") return null;
+      if (answers.conflict_vulnerability === "C") {
+        return {
+          title: "Có một chỗ Kai hơi để ý.",
+          body: "Một câu trả lời của bạn gợi ý rằng khi cãi nhau, bạn có thể dùng đúng điểm yếu đã biết để làm người kia đau vì cảm giác đó giúp mình thắng hoặc thấy đã hơn. Kai không ngại bất đồng, nói thẳng, phản biện hay chỉ ra một điểm yếu khi nó thật sự liên quan. Chỗ hơi khác hệ nằm ở việc dùng điều dễ tổn thương của người kia với mục đích làm đau họ.",
+        };
+      }
+      if (answers.jealousy_boundary === "C") {
+        return {
+          title: "Có một chỗ Kai hơi để ý.",
+          body: "Ghen một chút không phải điều Kai thấy lạ. Nhưng trong tình huống vừa rồi, người kia đã nói rõ rằng họ cảm thấy bị kiểm soát, còn câu trả lời của bạn vẫn xem việc chấp nhận cách đó là điều tình yêu nên đòi hỏi. Chỗ hơi khác hệ không nằm ở cảm giác ghen, mà ở điều xảy ra sau khi một giới hạn đã được nói rõ.",
+        };
+      }
+      return {
+        title: "Có vài chỗ Kai chưa chắc hai người sẽ vận hành giống nhau.",
+        body: "Qua mấy câu vừa rồi, bạn có vẻ khá thoải mái với việc một lời hứa nhỏ có thể trôi qua, đồng thời cần người thân đồng ý mới thấy yên tâm với quyết định lớn của hai người. Từng chuyện riêng lẻ chưa nói lên quá nhiều. Nhưng khi đặt cạnh nhau, chúng làm Kai hơi băn khoăn về việc hai người sẽ giữ lời với nhau và tự quyết chuyện của mối quan hệ đến đâu.",
+      };
+    })();
+    const visibleProfileKeys = verdictSupport ? result.profileKeys.slice(0, 4) : result.profileKeys;
+    return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={`${shell} py-12`}><p className={eyebrow}>Kết quả / {name.trim()}</p><section className="mt-12"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(2.8rem,12vw,5rem)] leading-[0.95]">{verdict.title}</h1><div className="mt-9 space-y-4 text-base leading-7 text-[#b9a994]"><p>{uncertainFirst}</p>{verdict.paragraphs.slice(1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section><section className="mt-16 border-t border-white/10 pt-10"><p className={eyebrow}>Qua mấy câu vừa rồi</p><div className="mt-7 space-y-10">{verdictSupport && <article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(verdictSupport.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(verdictSupport.body)}</p></article>}{visibleProfileKeys.map((key) => { const copy = observationCopy(key); return <article key={key}><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(copy.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(copy.body)}</p></article>; })}</div></section><aside aria-live="polite" className="mt-16 border-t border-white/10 pt-7 text-sm text-[#8d7660]">{sendState === "sending" && <p>Đang gửi cho Kai…</p>}{sendState === "sent" && <p className="text-[#bda88d]">Kai nhận được rồi :)</p>}{sendState === "failed" && <div><p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p><button onClick={() => submit()} className="mt-4 min-h-11 rounded-lg border border-white/20 px-4 text-[#d2c6b6] outline-none hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#d9b98e]">Thử gửi lại</button></div>}</aside></div></main>;
   }
   return null;
 }

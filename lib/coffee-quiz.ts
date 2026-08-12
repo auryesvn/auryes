@@ -161,12 +161,13 @@ export function computeCoffeeResult(answers: CoffeeAnswers): CoffeeResult {
     score: PROFILE_SUPPORT[key].reduce((score, [id, ids]) => score + Number(ids.includes(answers[id])), 0),
   })).sort((a, b) => b.score - a.score || a.index - b.index);
   const strong = ranked.filter((item) => item.score >= 2);
-  const selected = strong.slice(0, 3);
-  if (selected.length < 2) {
+  const selected = strong.slice(0, 5);
+  if (selected.length < 3) {
+    const weakLimit = selected.length === 2 ? 2 : 3 - selected.length;
     selected.push(
       ...ranked
         .filter((item) => item.score === 1)
-        .slice(0, 2 - selected.length),
+        .slice(0, weakLimit),
     );
   }
   return { verdictKey, profileKeys: selected.map((item) => item.key) };
