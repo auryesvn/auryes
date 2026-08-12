@@ -40,6 +40,21 @@ export type CoffeeQuestionId =
 
 export type CoffeeAnswers = Record<CoffeeQuestionId, AnswerId>;
 
+export const COFFEE_QUESTION_SHORT_TITLES: Record<CoffeeQuestionId, string> = {
+  tired: "Khi mệt",
+  free_evening: "Một buổi tối trống lịch",
+  idea_reality: "Ý tưởng nghe hay nhưng có vẻ không ổn",
+  jealousy_boundary: "Ghen và ranh giới",
+  small_promise: "Giữ lời",
+  separate_lives: "Đời riêng",
+  initiative: "Ai là người nghĩ trò?",
+  partner_better_domain: "Người ấy giỏi hơn bạn",
+  conflict_vulnerability: "Cãi nhau",
+  outside_opinion: "Ý kiến của người ngoài",
+  busy_partner: "Một người rất bận",
+  long_term_interest: "Sau vài năm",
+};
+
 type Question = {
   id: CoffeeQuestionId;
   prompt: string;

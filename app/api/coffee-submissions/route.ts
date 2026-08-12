@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { COFFEE_QUIZ_VERSION, computeCoffeeResult, isAddressMode, isCompleteAnswers, normalizeInstagram } from "@/lib/coffee-quiz";
+import { sendCoffeeSubmissionNotification } from "@/lib/telegram";
 
 const MAX_REQUEST_BYTES = 4_096;
 const REQUEST_KEYS = new Set(["quizVersion", "name", "instagram", "addressMode", "answers"]);
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       profile_snapshot: { keys: result.profileKeys },
     });
     if (error) return NextResponse.json({ error: "Unable to submit quiz" }, { status: 500 });
+    await sendCoffeeSubmissionNotification({ name, instagram, addressMode: body.addressMode, answers: body.answers, result, submittedAt: new Date() });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch { return NextResponse.json({ error: "Unable to submit quiz" }, { status: 500 }); }
 }

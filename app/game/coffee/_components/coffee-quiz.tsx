@@ -17,6 +17,7 @@ import {
   type ProfileKey,
   type VerdictKey,
 } from "@/lib/coffee-quiz";
+import { adaptCoffeeAddress, COFFEE_PROFILE_TITLES, COFFEE_VERDICT_TITLES, getCoffeeVerdictSupportKind, getCoffeeVisibleProfileKeys } from "@/lib/coffee-result-presentation";
 
 const ADDRESS_LABELS: Record<AddressMode, string> = { ban_minh: "Bạn / mình", cau_minh: "Cậu / mình", anh_em: "Anh / em 👀" };
 const REALITY_CHECK = {
@@ -27,10 +28,10 @@ const REALITY_CHECK = {
   videoId: "XoLoGpo3psk",
 } as const;
 const VERDICTS: Record<VerdictKey, { title: string; paragraphs: string[] }> = {
-  uncertain: { title: "Khó đoán. Đi cà phê rồi tính.", paragraphs: ["Có vài điểm khiến Kai thấy tò mò, nhưng từng này câu hỏi vẫn chưa đủ để biết hai người có thực sự hợp nhau không.", "Phần còn lại nên để ngoài đời trả lời."] },
-  promising: { title: "Ừm… có vẻ chơi được đấy 👀", paragraphs: ["Có vài điểm khá hợp nhau: cách gần gũi, cách nhìn vào thực tế hoặc cách hai người có thể kéo nhau vào những trải nghiệm mới.", "Nhưng đừng tin web quá. Gặp nhau vẫn quan trọng hơn."] },
-  friend_like: { title: "Nghe hơi giống đồng bọn hơn.", paragraphs: ["Có thể nói chuyện, chơi hoặc làm vài thứ cùng nhau vẫn rất vui.", "Còn có bật sang “mode người yêu” không thì web chịu."] },
-  different_system: { title: "Có vẻ hơi khác hệ.", paragraphs: ["Không phải ai sai cả.", "Chỉ là có vài chỗ nếu bước vào một mối quan hệ thật thì hai người có thể phải tốn khá nhiều công để khớp với nhau."] },
+  uncertain: { title: COFFEE_VERDICT_TITLES.uncertain, paragraphs: ["Có vài điểm khiến Kai thấy tò mò, nhưng từng này câu hỏi vẫn chưa đủ để biết hai người có thực sự hợp nhau không.", "Phần còn lại nên để ngoài đời trả lời."] },
+  promising: { title: COFFEE_VERDICT_TITLES.promising, paragraphs: ["Có vài điểm khá hợp nhau: cách gần gũi, cách nhìn vào thực tế hoặc cách hai người có thể kéo nhau vào những trải nghiệm mới.", "Nhưng đừng tin web quá. Gặp nhau vẫn quan trọng hơn."] },
+  friend_like: { title: COFFEE_VERDICT_TITLES.friend_like, paragraphs: ["Có thể nói chuyện, chơi hoặc làm vài thứ cùng nhau vẫn rất vui.", "Còn có bật sang “mode người yêu” không thì web chịu."] },
+  different_system: { title: COFFEE_VERDICT_TITLES.different_system, paragraphs: ["Không phải ai sai cả.", "Chỉ là có vài chỗ nếu bước vào một mối quan hệ thật thì hai người có thể phải tốn khá nhiều công để khớp với nhau."] },
 };
 type ProfileCopy = {
   strong: { title: string; body: string };
@@ -153,26 +154,27 @@ export default function CoffeeQuiz() {
   if (stage === "result" && addressMode) {
     const result = computeCoffeeResult(answers as CoffeeAnswers); const verdict = VERDICTS[result.verdictKey];
     const uncertainFirst = addressMode === "anh_em" && result.verdictKey === "uncertain" ? "Có vài điểm khiến anh thấy tò mò về em, nhưng từng này câu hỏi vẫn chưa đủ để biết hai người có thực sự hợp nhau không." : verdict.paragraphs[0];
-    const adapt = (text: string) => addressMode === "cau_minh" ? text.replaceAll("Bạn", "Cậu").replaceAll("bạn", "cậu") : addressMode === "anh_em" ? text.replaceAll("Bạn", "Em").replaceAll("bạn", "em") : text;
+    const adapt = (text: string) => adaptCoffeeAddress(text, addressMode);
     const observationCopy = (key: ProfileKey) => {
       const confidence = profileEvidenceCount(answers as CoffeeAnswers, key) >= 2 ? "strong" : "weak";
-      return PROFILES[key][confidence];
+      return { ...PROFILES[key][confidence], title: COFFEE_PROFILE_TITLES[key][confidence] };
     };
+    const verdictSupportKind = getCoffeeVerdictSupportKind(answers as CoffeeAnswers, result.verdictKey);
     const verdictSupport = (() : VerdictSupportCopy | null => {
-      if (result.verdictKey === "friend_like") {
+      if (verdictSupportKind === "friend_like") {
         return {
           title: "Chưa thấy quá nhiều chất ‘người yêu’ trong mấy câu này.",
           body: "Bạn vẫn có vẻ là kiểu người có thể nói chuyện, chơi và tìm thấy thứ để nể ở người kia. Nhưng qua mấy câu vừa rồi, chưa có nhiều dấu hiệu cho thấy bạn đặc biệt cần kiểu gần gũi mang màu sắc người yêu. Cái này web cũng khó đoán; đôi khi gặp đúng người thì nó mới bật.",
         };
       }
-      if (result.verdictKey !== "different_system") return null;
-      if (answers.conflict_vulnerability === "C") {
+      if (!verdictSupportKind) return null;
+      if (verdictSupportKind === "conflict_vulnerability") {
         return {
           title: "Có một chỗ Kai hơi để ý.",
           body: "Một câu trả lời của bạn gợi ý rằng khi cãi nhau, bạn có thể dùng đúng điểm yếu đã biết để làm người kia đau vì cảm giác đó giúp mình thắng hoặc thấy đã hơn. Kai không ngại bất đồng, nói thẳng, phản biện hay chỉ ra một điểm yếu khi nó thật sự liên quan. Chỗ hơi khác hệ nằm ở việc dùng điều dễ tổn thương của người kia với mục đích làm đau họ.",
         };
       }
-      if (answers.jealousy_boundary === "C") {
+      if (verdictSupportKind === "jealousy_boundary") {
         return {
           title: "Có một chỗ Kai hơi để ý.",
           body: "Ghen một chút không phải điều Kai thấy lạ. Nhưng trong tình huống vừa rồi, người kia đã nói rõ rằng họ cảm thấy bị kiểm soát, còn câu trả lời của bạn vẫn xem việc chấp nhận cách đó là điều tình yêu nên đòi hỏi. Chỗ hơi khác hệ không nằm ở cảm giác ghen, mà ở điều xảy ra sau khi một giới hạn đã được nói rõ.",
@@ -183,7 +185,7 @@ export default function CoffeeQuiz() {
         body: "Qua mấy câu vừa rồi, bạn có vẻ khá thoải mái với việc một lời hứa nhỏ có thể trôi qua, đồng thời cần người thân đồng ý mới thấy yên tâm với quyết định lớn của hai người. Từng chuyện riêng lẻ chưa nói lên quá nhiều. Nhưng khi đặt cạnh nhau, chúng làm Kai hơi băn khoăn về việc hai người sẽ giữ lời với nhau và tự quyết chuyện của mối quan hệ đến đâu.",
       };
     })();
-    const visibleProfileKeys = verdictSupport ? result.profileKeys.slice(0, 4) : result.profileKeys;
+    const visibleProfileKeys = getCoffeeVisibleProfileKeys(result, verdictSupportKind);
     return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={`${shell} py-12`}><p className={eyebrow}>Kết quả / {name.trim()}</p><section className="mt-12"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(2.8rem,12vw,5rem)] leading-[0.95]">{verdict.title}</h1><div className="mt-9 space-y-4 text-base leading-7 text-[#b9a994]"><p>{uncertainFirst}</p>{verdict.paragraphs.slice(1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section><section className="mt-16 border-t border-white/10 pt-10"><p className={eyebrow}>Qua mấy câu vừa rồi</p><div className="mt-7 space-y-10">{verdictSupport && <article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(verdictSupport.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(verdictSupport.body)}</p></article>}{visibleProfileKeys.map((key) => { const copy = observationCopy(key); const showRealityCheck = key === "limits" && ["A", "B", "D"].includes(answers.jealousy_boundary ?? ""); return <Fragment key={key}><article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(copy.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(copy.body)}</p></article>{showRealityCheck && <aside className="border-y border-[#574637]/55 py-7"><p className="text-[0.6rem] uppercase tracking-[0.25em] text-[#8d7660]">{REALITY_CHECK.eyebrow}</p><h3 className="mt-4 [font-family:var(--font-coffee-serif)] text-xl leading-snug text-[#d8cbb8]">{REALITY_CHECK.title}</h3><p className="mt-3 text-sm leading-6 text-[#8f7d69]">{REALITY_CHECK.body}</p><button ref={realityCheckTriggerRef} type="button" onClick={() => setRealityCheckOpen(true)} className="mt-5 min-h-11 border-b border-[#8c7054] py-2 text-left text-sm text-[#d5c3aa] outline-none hover:border-[#f0e6d5] hover:text-[#f0e6d5] focus-visible:ring-2 focus-visible:ring-[#b99972]">{REALITY_CHECK.cta}</button></aside>}</Fragment>; })}</div></section><aside aria-live="polite" className="mt-16 border-t border-white/10 pt-7 text-sm text-[#8d7660]">{sendState === "sending" && <p>Đang gửi cho Kai…</p>}{sendState === "sent" && <p className="text-[#bda88d]">Kai nhận được rồi :)</p>}{sendState === "failed" && <div><p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p><button onClick={() => submit()} className="mt-4 min-h-11 rounded-lg border border-white/20 px-4 text-[#d2c6b6] outline-none hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#d9b98e]">Thử gửi lại</button></div>}</aside></div>{realityCheckOpen && <dialog ref={realityCheckDialogRef} aria-labelledby="reality-check-title" onCancel={(event) => { event.preventDefault(); setRealityCheckOpen(false); }} onClick={(event) => { if (event.target === event.currentTarget) setRealityCheckOpen(false); }} className="m-auto max-h-none max-w-none bg-transparent p-0 text-[#eee4d4] backdrop:bg-black/85"><div className="flex max-h-[calc(100dvh-2rem)] flex-col items-end gap-3"><button type="button" aria-label="Đóng video" onClick={() => setRealityCheckOpen(false)} className="min-h-11 px-3 text-sm text-[#d5c3aa] outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[#b99972]">Đóng ×</button><div className="aspect-[9/16] w-[min(90vw,22.5rem,calc((100dvh-7rem)*9/16))] overflow-hidden bg-black"><iframe src={`https://www.youtube-nocookie.com/embed/${REALITY_CHECK.videoId}`} title="Reality check: lý thuyết với thực tế đôi khi hơi khác nhau" className="size-full border-0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div></dialog>}</main>;
   }
   return null;
