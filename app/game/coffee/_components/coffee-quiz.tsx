@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   ADDRESS_MODES,
   COFFEE_QUESTIONS,
@@ -18,6 +19,13 @@ import {
 } from "@/lib/coffee-quiz";
 
 const ADDRESS_LABELS: Record<AddressMode, string> = { ban_minh: "Bạn / mình", cau_minh: "Cậu / mình", anh_em: "Anh / em 👀" };
+const REALITY_CHECK = {
+  eyebrow: "Reality check :))",
+  title: "Lý thuyết với thực tế đôi khi hơi khác nhau.",
+  body: "Có những chuyện lúc chưa yêu nghe rất dễ. Vào đúng tình huống rồi mới biết mình phản ứng thế nào :))",
+  cta: "▶ Xem một ví dụ rất đời",
+  videoId: "XoLoGpo3psk",
+} as const;
 const VERDICTS: Record<VerdictKey, { title: string; paragraphs: string[] }> = {
   uncertain: { title: "Khó đoán. Đi cà phê rồi tính.", paragraphs: ["Có vài điểm khiến Kai thấy tò mò, nhưng từng này câu hỏi vẫn chưa đủ để biết hai người có thực sự hợp nhau không.", "Phần còn lại nên để ngoài đời trả lời."] },
   promising: { title: "Ừm… có vẻ chơi được đấy 👀", paragraphs: ["Có vài điểm khá hợp nhau: cách gần gũi, cách nhìn vào thực tế hoặc cách hai người có thể kéo nhau vào những trải nghiệm mới.", "Nhưng đừng tin web quá. Gặp nhau vẫn quan trọng hơn."] },
@@ -70,10 +78,35 @@ export default function CoffeeQuiz() {
   const [instagram, setInstagram] = useState("");
   const [formError, setFormError] = useState("");
   const [sendState, setSendState] = useState<SendState>("idle");
+  const [realityCheckOpen, setRealityCheckOpen] = useState(false);
+  const realityCheckDialogRef = useRef<HTMLDialogElement>(null);
+  const realityCheckTriggerRef = useRef<HTMLButtonElement>(null);
 
   const shell = "relative mx-auto flex min-h-svh w-full max-w-xl flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-7 sm:px-8";
   const eyebrow = "text-[0.65rem] uppercase tracking-[0.28em] text-[#8d7660]";
   const button = "min-h-14 w-full rounded-xl border px-5 py-4 text-left text-base leading-6 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#d9b98e] motion-reduce:transition-none";
+
+  useEffect(() => {
+    const dialog = realityCheckDialogRef.current;
+    if (!dialog || !realityCheckOpen) return;
+
+    const trigger = realityCheckTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    dialog.setAttribute("aria-label", REALITY_CHECK.title);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRealityCheckOpen(false);
+    };
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (dialog.open) dialog.close();
+      trigger?.focus();
+    };
+  }, [realityCheckOpen]);
 
   function chooseAnswer(id: CoffeeQuestionId, answer: AnswerId) {
     setAnswers((current) => ({ ...current, [id]: answer }));
@@ -106,7 +139,7 @@ export default function CoffeeQuiz() {
     } catch { setSendState("failed"); }
   }
 
-  if (stage === "intro") return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4] selection:bg-[#9a7958]"><div className={`${shell} justify-between`}><p className={eyebrow}>Auryes / một trò chơi nhỏ</p><section className="py-16"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(3rem,13vw,5.5rem)] leading-[0.92]">Có vẻ chúng ta hợp kiểu nào nhỉ?</h1><div className="mt-10 space-y-5 text-base leading-7 text-[#b9a994]"><p>Một trò chơi nhỏ để xem cách bạn suy nghĩ và phản ứng khi ở gần một người khác.</p><p>Không có đáp án chuẩn. Không có “hợp 96%”. Cũng không có người hoàn hảo.</p><p>Mình chỉ biết những gì bạn chọn ở đây. Còn cách nói chuyện, cách đùa, năng lượng khi gặp nhau và cả một chút duyên số thì… chắc phải gặp mới biết.</p></div></section><button className="min-h-14 rounded-xl bg-[#eee4d4] px-6 py-4 font-medium text-[#0b0908] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-[#d9b98e]" onClick={() => setStage("address")}>Chơi thử · khoảng 2 phút</button></div></main>;
+  if (stage === "intro") return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4] selection:bg-[#9a7958]"><div className="mx-auto flex min-h-svh w-full max-w-7xl flex-col px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pb-[max(2rem,env(safe-area-inset-bottom))] sm:pt-7 lg:px-10 lg:py-10"><p className={eyebrow}>Auryes / một trò chơi nhỏ của Kai</p><div className="flex flex-1 flex-col lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-16"><section className="py-5 sm:py-14 lg:col-span-7 lg:py-16"><h1 className="max-w-3xl [font-family:var(--font-coffee-serif)] text-[2.75rem] leading-[0.92] sm:text-[clamp(3rem,10vw,6.5rem)]">Có vẻ chúng ta hợp kiểu nào nhỉ?</h1><p className="mt-4 text-sm leading-5 text-[#b9a994] sm:hidden">Một trò chơi nhỏ để xem cách bạn suy nghĩ và phản ứng khi ở gần một người khác.</p><div className="mt-8 hidden max-w-xl space-y-4 text-base leading-7 text-[#b9a994] sm:mt-10 sm:block sm:space-y-5"><p>Một trò chơi nhỏ để xem cách bạn suy nghĩ và phản ứng khi ở gần một người khác.</p><p>Không có đáp án chuẩn. Không có “hợp 96%”. Cũng không có người hoàn hảo.</p><p>Mình chỉ biết những gì bạn chọn ở đây. Còn cách nói chuyện, cách đùa, năng lượng khi gặp nhau và cả một chút duyên số thì… chắc phải gặp mới biết.</p></div></section><figure className="mx-auto w-[82%] max-w-[17.5rem] sm:w-[78%] sm:max-w-72 lg:col-span-5 lg:row-span-2 lg:mx-0 lg:w-full lg:max-w-md lg:justify-self-end"><div className="relative aspect-square overflow-hidden sm:aspect-[3/4]"><Image src="/coffee/kai-playful.jpg" alt="Kai đưa tay về phía máy ảnh với vẻ mặt vui vẻ" fill priority sizes="(max-width: 639px) 76vw, (max-width: 1023px) 72vw, 38vw" className="object-cover object-[50%_67%] sm:object-center" /></div><figcaption className="mt-3 hidden text-[0.62rem] uppercase tracking-[0.2em] text-[#776654] sm:block">Kai, người nghĩ ra trò này.</figcaption></figure><div className="mt-3 pb-1 text-center sm:mt-9 sm:text-left lg:col-span-7 lg:mt-0 lg:self-start"><button className="min-h-14 w-[76%] rounded-lg bg-[#eee4d4] px-6 py-4 font-semibold text-[#0b0908] outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-[#d9b98e] sm:w-full sm:max-w-sm sm:rounded-xl sm:font-medium" onClick={() => setStage("address")}><span className="sm:hidden">Chơi thử xem 👀</span><span className="hidden sm:inline">Chơi thử · khoảng 2 phút</span></button><aside className="mt-7 text-left sm:hidden"><p className="text-xs text-[#776654]">12 câu · khoảng 2 phút</p><div className="mt-4 space-y-3 text-sm leading-6 text-[#8d7d6a]"><p>Không có đáp án chuẩn. Không có “hợp 96%”. Cũng không có người hoàn hảo.</p><p>Mình chỉ biết những gì bạn chọn ở đây. Còn cách nói chuyện, cách đùa, năng lượng khi gặp nhau và cả một chút duyên số thì... chắc phải gặp mới biết.</p></div></aside></div></div></div></main>;
 
   if (stage === "address") return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={shell}><button onClick={goBack} className={`${eyebrow} self-start py-2 outline-none focus-visible:ring-2 focus-visible:ring-[#d9b98e]`}>← Quay lại</button><section className="my-auto py-16"><p className={eyebrow}>Trước khi bắt đầu</p><h1 className="mt-6 [font-family:var(--font-coffee-serif)] text-4xl leading-tight">Mình xưng hô thế nào nhỉ?</h1><div className="mt-10 space-y-3">{ADDRESS_MODES.map((mode) => <button key={mode} className={`${button} ${addressMode === mode ? "border-[#eee4d4] bg-[#eee4d4] text-[#0b0908]" : "border-white/15 text-[#d2c6b6] hover:border-white/35"}`} onClick={() => { setAddressMode(mode); setStage("questions"); }}>{ADDRESS_LABELS[mode]}</button>)}</div></section></div></main>;
 
@@ -151,7 +184,7 @@ export default function CoffeeQuiz() {
       };
     })();
     const visibleProfileKeys = verdictSupport ? result.profileKeys.slice(0, 4) : result.profileKeys;
-    return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={`${shell} py-12`}><p className={eyebrow}>Kết quả / {name.trim()}</p><section className="mt-12"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(2.8rem,12vw,5rem)] leading-[0.95]">{verdict.title}</h1><div className="mt-9 space-y-4 text-base leading-7 text-[#b9a994]"><p>{uncertainFirst}</p>{verdict.paragraphs.slice(1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section><section className="mt-16 border-t border-white/10 pt-10"><p className={eyebrow}>Qua mấy câu vừa rồi</p><div className="mt-7 space-y-10">{verdictSupport && <article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(verdictSupport.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(verdictSupport.body)}</p></article>}{visibleProfileKeys.map((key) => { const copy = observationCopy(key); return <article key={key}><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(copy.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(copy.body)}</p></article>; })}</div></section><aside aria-live="polite" className="mt-16 border-t border-white/10 pt-7 text-sm text-[#8d7660]">{sendState === "sending" && <p>Đang gửi cho Kai…</p>}{sendState === "sent" && <p className="text-[#bda88d]">Kai nhận được rồi :)</p>}{sendState === "failed" && <div><p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p><button onClick={() => submit()} className="mt-4 min-h-11 rounded-lg border border-white/20 px-4 text-[#d2c6b6] outline-none hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#d9b98e]">Thử gửi lại</button></div>}</aside></div></main>;
+    return <main className="min-h-svh bg-[#0b0908] text-[#eee4d4]"><div className={`${shell} py-12`}><p className={eyebrow}>Kết quả / {name.trim()}</p><section className="mt-12"><h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(2.8rem,12vw,5rem)] leading-[0.95]">{verdict.title}</h1><div className="mt-9 space-y-4 text-base leading-7 text-[#b9a994]"><p>{uncertainFirst}</p>{verdict.paragraphs.slice(1).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div></section><section className="mt-16 border-t border-white/10 pt-10"><p className={eyebrow}>Qua mấy câu vừa rồi</p><div className="mt-7 space-y-10">{verdictSupport && <article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(verdictSupport.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(verdictSupport.body)}</p></article>}{visibleProfileKeys.map((key) => { const copy = observationCopy(key); const showRealityCheck = key === "limits" && ["A", "B", "D"].includes(answers.jealousy_boundary ?? ""); return <Fragment key={key}><article><h2 className="[font-family:var(--font-coffee-serif)] text-2xl leading-tight">{adapt(copy.title)}</h2><p className="mt-3 leading-7 text-[#998875]">{adapt(copy.body)}</p></article>{showRealityCheck && <aside className="border-y border-[#574637]/55 py-7"><p className="text-[0.6rem] uppercase tracking-[0.25em] text-[#8d7660]">{REALITY_CHECK.eyebrow}</p><h3 className="mt-4 [font-family:var(--font-coffee-serif)] text-xl leading-snug text-[#d8cbb8]">{REALITY_CHECK.title}</h3><p className="mt-3 text-sm leading-6 text-[#8f7d69]">{REALITY_CHECK.body}</p><button ref={realityCheckTriggerRef} type="button" onClick={() => setRealityCheckOpen(true)} className="mt-5 min-h-11 border-b border-[#8c7054] py-2 text-left text-sm text-[#d5c3aa] outline-none hover:border-[#f0e6d5] hover:text-[#f0e6d5] focus-visible:ring-2 focus-visible:ring-[#b99972]">{REALITY_CHECK.cta}</button></aside>}</Fragment>; })}</div></section><aside aria-live="polite" className="mt-16 border-t border-white/10 pt-7 text-sm text-[#8d7660]">{sendState === "sending" && <p>Đang gửi cho Kai…</p>}{sendState === "sent" && <p className="text-[#bda88d]">Kai nhận được rồi :)</p>}{sendState === "failed" && <div><p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p><button onClick={() => submit()} className="mt-4 min-h-11 rounded-lg border border-white/20 px-4 text-[#d2c6b6] outline-none hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[#d9b98e]">Thử gửi lại</button></div>}</aside></div>{realityCheckOpen && <dialog ref={realityCheckDialogRef} aria-labelledby="reality-check-title" onCancel={(event) => { event.preventDefault(); setRealityCheckOpen(false); }} onClick={(event) => { if (event.target === event.currentTarget) setRealityCheckOpen(false); }} className="m-auto max-h-none max-w-none bg-transparent p-0 text-[#eee4d4] backdrop:bg-black/85"><div className="flex max-h-[calc(100dvh-2rem)] flex-col items-end gap-3"><button type="button" aria-label="Đóng video" onClick={() => setRealityCheckOpen(false)} className="min-h-11 px-3 text-sm text-[#d5c3aa] outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-[#b99972]">Đóng ×</button><div className="aspect-[9/16] w-[min(90vw,22.5rem,calc((100dvh-7rem)*9/16))] overflow-hidden bg-black"><iframe src={`https://www.youtube-nocookie.com/embed/${REALITY_CHECK.videoId}`} title="Reality check: lý thuyết với thực tế đôi khi hơi khác nhau" className="size-full border-0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div></dialog>}</main>;
   }
   return null;
 }

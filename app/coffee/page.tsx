@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import CoffeeQuiz from "./_components/coffee-quiz";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Có vẻ chúng ta hợp kiểu nào nhỉ? — Auryes",
-  description: "Một trò chơi nhỏ của Auryes để xem hai người có thể hợp kiểu nào.",
-};
-
-export default function CoffeePage() {
-  return <CoffeeQuiz />;
+export default function LegacyCoffeePage() {
+  permanentRedirect("/game/coffee");
 }
