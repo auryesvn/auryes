@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Lora } from "next/font/google";
 
+import HeroDecorations from "./_components/hero-decorations";
 import ParallaxCover from "./_components/parallax-cover";
 import StickyContactCta from "./_components/sticky-contact-cta";
 import { kaiProfile } from "./_data/profile";
@@ -107,8 +108,10 @@ export default function KaiPage() {
           />
         </header>
 
-        <section className="relative z-10 -mt-[7.6rem] px-5 text-center">
-          <div className="relative mx-auto aspect-[1203/1416] w-[15.25rem] max-w-[72vw]">
+        <section className="relative z-10 -mt-[7.6rem] overflow-hidden px-5 text-center">
+          <HeroDecorations />
+
+          <div className="relative z-10 mx-auto aspect-[1203/1416] w-[15.25rem] max-w-[72vw]">
             <div
               className="absolute left-[calc(6.82%-8px)] top-[calc(6.50%-8px)] aspect-square w-[calc(85.12%+16px)] rounded-full bg-white shadow-[0_12px_28px_rgba(38,29,21,0.24)]"
               aria-hidden="true"
@@ -123,7 +126,7 @@ export default function KaiPage() {
             />
           </div>
 
-          <div className="-mt-5">
+          <div className="relative z-10 -mt-5">
             <p className={`${eyebrow} text-[#9f3029]`}>Auryes / Kai 01</p>
             <h1 className="mt-4 [font-family:var(--font-kai-serif)] text-[3.35rem] font-medium leading-[0.9] tracking-[-0.055em]">
               Kai Trần
@@ -134,7 +137,7 @@ export default function KaiPage() {
             <p className="mt-1 text-sm text-[#756d62]">{kaiProfile.location}</p>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3">
+          <div className="relative z-10 mt-8 grid grid-cols-2 gap-3">
             <a
               id="kai-primary-contact"
               href={kaiProfile.vcard}
