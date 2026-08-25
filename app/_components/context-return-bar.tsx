@@ -34,12 +34,14 @@ export default function ContextReturnBar() {
   const searchParams = useSearchParams();
   const queryContext = searchParams.get("context");
   const [context, setContext] = useState<ReturnContext | null>(null);
+  const isSuppressedRoute =
+    pathname === "/kai" || pathname === "/3288" || pathname.startsWith("/3288/");
 
   useEffect(() => {
     let cancelled = false;
     let nextContext: ReturnContext | null = null;
 
-    if (pathname !== "/kai") {
+    if (!isSuppressedRoute) {
       try {
         if (isReturnContext(queryContext)) {
           sessionStorage.setItem(STORAGE_KEY, queryContext);
@@ -68,9 +70,9 @@ export default function ContextReturnBar() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, queryContext]);
+  }, [isSuppressedRoute, queryContext]);
 
-  if (!context || pathname === "/kai") return null;
+  if (!context || isSuppressedRoute) return null;
 
   const config = RETURN_CONTEXTS[context];
 
