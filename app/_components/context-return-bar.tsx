@@ -41,7 +41,9 @@ export default function ContextReturnBar() {
     let cancelled = false;
     let nextContext: ReturnContext | null = null;
 
-    if (!isSuppressedRoute) {
+    const is3288Host = window.location.hostname.toLowerCase() === "3288.site";
+
+    if (!isSuppressedRoute && !is3288Host) {
       try {
         if (isReturnContext(queryContext)) {
           sessionStorage.setItem(STORAGE_KEY, queryContext);

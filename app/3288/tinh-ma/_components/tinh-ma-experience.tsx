@@ -8,14 +8,14 @@ import { WorldMenu } from "../../_components/world-menu";
 type Mode = "world" | "lyrics" | "archive";
 
 const tinhMaSceneAssets = [
-  "/3288/tinh-ma/tinh-ma-room-night.png",
-  "/3288/tinh-ma/tinh-ma-artwork.png",
-  "/3288/tinh-ma/tinh-ma-chorus1-trees.png",
-  "/3288/tinh-ma/tinh-ma-chorus1-street-v4.png",
-  "/3288/tinh-ma/tinh-ma-duality-v2.png",
-  "/3288/tinh-ma/tinh-ma-chorus2-trees-v4.png",
-  "/3288/tinh-ma/tinh-ma-chorus-leaves-v2.png",
-  "/3288/tinh-ma/tinh-ma-resolution-hands-v2.png",
+  "/tinh-ma/tinh-ma-room-night.png",
+  "/tinh-ma/tinh-ma-artwork.png",
+  "/tinh-ma/tinh-ma-chorus1-trees.png",
+  "/tinh-ma/tinh-ma-chorus1-street-v4.png",
+  "/tinh-ma/tinh-ma-duality-v2.png",
+  "/tinh-ma/tinh-ma-chorus2-trees-v4.png",
+  "/tinh-ma/tinh-ma-chorus-leaves-v2.png",
+  "/tinh-ma/tinh-ma-resolution-hands-v2.png",
 ] as const;
 
 const lyricCues = [
@@ -98,10 +98,10 @@ export default function Experience() {
   };
 
   return <main data-tinh-ma-world className="experience is-song theme-tinhma">
-    <audio ref={audioRef} src="/3288/tinh-ma/tinh-ma.mp3" preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+    <audio ref={audioRef} src="/tinh-ma/tinh-ma.mp3" preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onEnded={() => setPlaying(false)} />
     <header className="topbar">
-      <Link className="brand" href="/3288" aria-label="Về bản đồ 3288">3288</Link>
-      <Link className="world-back" href="/3288">← NHỮNG THẾ GIỚI</Link>
+      <Link className="brand" href="/" aria-label="Về bản đồ 3288">3288</Link>
+      <Link className="world-back" href="/">← NHỮNG THẾ GIỚI</Link>
       <button className={`menu ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button>
     </header>
     <WorldMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
