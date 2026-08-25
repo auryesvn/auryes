@@ -5,26 +5,14 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/3288",
-        has: [{ type: "host", value: "(?:www\\.)?auryes\\.vn" }],
-        destination: "https://3288.site",
-        permanent: true,
-      },
-      {
-        source: "/3288/:path*",
-        has: [{ type: "host", value: "(?:www\\.)?auryes\\.vn" }],
-        destination: "https://3288.site/:path*",
-        permanent: true,
-      },
-      {
-        source: "/3288",
         has: [{ type: "host", value: "3288.site" }],
         destination: "https://3288.site",
         permanent: true,
       },
       {
-        source: "/3288/:path*",
+        source: "/3288/tinh-ma",
         has: [{ type: "host", value: "3288.site" }],
-        destination: "https://3288.site/:path*",
+        destination: "https://3288.site/tinh-ma",
         permanent: true,
       },
     ];
