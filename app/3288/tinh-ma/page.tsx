@@ -1,5 +1,6 @@
 import TinhMaExperience from "./_components/tinh-ma-experience";
+import { getNamespaceBasePath } from "../_lib/host";
 
-export default function TinhMaPage() {
-  return <TinhMaExperience />;
+export default async function TinhMaPage() {
+  return <TinhMaExperience basePath={await getNamespaceBasePath()} />;
 }

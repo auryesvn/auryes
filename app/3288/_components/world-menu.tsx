@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export function WorldMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+import type { NamespaceBasePath } from "../_lib/host";
+
+export function WorldMenu({ basePath, open, onClose }: { basePath: NamespaceBasePath; open: boolean; onClose: () => void }) {
+  const homeHref = basePath || "/";
   const [panel, setPanel] = useState<"root" | "about" | "upcoming">("root");
   if (!open) return null;
 
@@ -12,8 +15,8 @@ export function WorldMenu({ open, onClose }: { open: boolean; onClose: () => voi
       <button className="site-menu-close" aria-label="Đóng menu" onClick={onClose}>×</button>
       <div className="site-menu-index">3288 · MENU</div>
       <nav>
-        <Link href="/" onClick={onClose}><b>01</b><span>TRANG CHỦ<small>Những thế giới</small></span></Link>
-        <Link href="/#catalogue" onClick={onClose}><b>02</b><span>BÀI HÁT<small>Đi vào từng thế giới</small></span></Link>
+        <Link href={homeHref} onClick={onClose}><b>01</b><span>TRANG CHỦ<small>Những thế giới</small></span></Link>
+        <Link href={`${homeHref}#catalogue`} onClick={onClose}><b>02</b><span>BÀI HÁT<small>Đi vào từng thế giới</small></span></Link>
         <button className={panel === "about" ? "active" : ""} onClick={() => setPanel("about")}><b>03</b><span>3288 LÀ GÌ?<small>Một bài hát là một thế giới</small></span></button>
         <button className={panel === "upcoming" ? "active" : ""} onClick={() => setPanel("upcoming")}><b>04</b><span>THỨ GÌ SẮP TỚI?<small>Những thế giới đang hình thành</small></span></button>
       </nav>

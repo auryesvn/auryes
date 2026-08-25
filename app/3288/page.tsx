@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { UniverseHome } from "./_components/universe-home";
+import { getNamespaceBasePath } from "./_lib/host";
 
 const canonicalUrl = "https://3288.site";
 
@@ -12,6 +13,6 @@ export const metadata: Metadata = {
   twitter: { card: "summary", title: "3288 — Những thế giới", description: "Một bài hát là một thế giới." },
 };
 
-export default function UniversePage() {
-  return <UniverseHome />;
+export default async function UniversePage() {
+  return <UniverseHome basePath={await getNamespaceBasePath()} />;
 }
