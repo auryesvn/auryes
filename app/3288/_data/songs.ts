@@ -5,7 +5,7 @@ export type CatalogueSong = {
   slug: string;
   artwork: `/3288/catalogue/${string}.jpg`;
   status: CatalogueStatus;
-  route: "/3288/tinh-ma" | null;
+  route: "/tinh-ma" | null;
   position: { x: number; y: number };
 };
 
@@ -18,7 +18,7 @@ export const catalogueSongs = [
   { title: "Vết Son", slug: "vet-son", artwork: "/3288/catalogue/vet-son.jpg", status: "forming", route: null, position: { x: 59, y: 15 } },
   { title: "Đêm Vắng 2", slug: "dem-vang-2", artwork: "/3288/catalogue/dem-vang-2.jpg", status: "forming", route: null, position: { x: 76, y: 15 } },
   { title: "NCL ANE", slug: "ncl-ane", artwork: "/3288/catalogue/ncl-ane.jpg", status: "forming", route: null, position: { x: 93, y: 15 } },
-  { title: "Tình Ma", slug: "tinh-ma", artwork: "/3288/catalogue/tinh-ma.jpg", status: "live", route: "/3288/tinh-ma", position: { x: 8, y: 50 } },
+  { title: "Tình Ma", slug: "tinh-ma", artwork: "/3288/catalogue/tinh-ma.jpg", status: "live", route: "/tinh-ma", position: { x: 8, y: 50 } },
   { title: "It's A Match", slug: "its-a-match", artwork: "/3288/catalogue/its-a-match.jpg", status: "forming", route: null, position: { x: 25, y: 50 } },
   { title: "Mưa Rơi", slug: "mua-roi", artwork: "/3288/catalogue/mua-roi.jpg", status: "forming", route: null, position: { x: 42, y: 50 } },
   { title: "Chốn Bình Yên", slug: "chon-binh-yen", artwork: "/3288/catalogue/chon-binh-yen.jpg", status: "forming", route: null, position: { x: 59, y: 50 } },

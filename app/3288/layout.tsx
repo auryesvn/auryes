@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./3288.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://auryes.vn"),
+  metadataBase: new URL("https://3288.site"),
 };
 
 export default function UniverseLayout({ children }: Readonly<{ children: React.ReactNode }>) {

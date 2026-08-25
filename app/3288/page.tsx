@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { UniverseHome } from "./_components/universe-home";
 
-const canonicalUrl = "https://auryes.vn/3288";
+const canonicalUrl = "https://3288.site";
 
 export const metadata: Metadata = {
   title: "3288 — Những thế giới",

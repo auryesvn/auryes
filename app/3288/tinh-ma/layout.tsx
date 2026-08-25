@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
-const canonicalUrl = "https://auryes.vn/3288/tinh-ma";
+const canonicalUrl = "https://3288.site/tinh-ma";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://auryes.vn"),
+  metadataBase: new URL("https://3288.site"),
   title: "Tình Ma — 3288",
   description:
     "Em không còn ở đây. Nhưng tình yêu ấy vẫn biết cách quay về.",
@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     url: canonicalUrl,
     type: "website",
     locale: "vi_VN",
-    images: [{ url: "/3288/tinh-ma/opengraph-image.png" }],
+    images: [{ url: "/tinh-ma/opengraph-image.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tình Ma — 3288",
     description:
       "Em không còn ở đây. Nhưng tình yêu ấy vẫn biết cách quay về.",
-    images: ["/3288/tinh-ma/opengraph-image.png"],
+    images: ["/tinh-ma/opengraph-image.png"],
   },
 };
 

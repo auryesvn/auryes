@@ -14,7 +14,7 @@ export function UniverseHome() {
 
   return <main data-tinh-ma-world className="experience is-universe catalogue-home">
     <header className="topbar">
-      <Link className="brand" href="/3288" aria-label="Trang chủ 3288">3288</Link>
+      <Link className="brand" href="/" aria-label="Trang chủ 3288">3288</Link>
       <nav className="lenses"><button className="active">KHÁM PHÁ</button><button>CHỦ ĐỀ</button><button>THỜI GIAN</button></nav>
       <button className={`menu ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button>
     </header>
