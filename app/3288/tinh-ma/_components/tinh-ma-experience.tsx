@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
-type View = "universe" | "song";
-type SongId = "hills" | "tinhma";
+import { WorldMenu } from "../../_components/world-menu";
 type Mode = "world" | "lyrics" | "archive";
-
-const nodes = [
-  { id: "forest", title: "NHỮNG KHU RỪNG MƠ", x: 17, y: 24, tone: "forest" },
-  { id: "tinhma", title: "TÌNH MA", x: 45, y: 19, tone: "tinhma" },
-  { id: "city", title: "ĐÈN SAU 3 GIỜ", x: 79, y: 28, tone: "city" },
-  { id: "hills", title: "QUA NHỮNG NGỌN ĐỒI", x: 52, y: 58, tone: "hills" },
-  { id: "return", title: "ĐI ĐỂ TRỞ VỀ", x: 22, y: 70, tone: "return" },
-  { id: "together", title: "CÙNG NHAU", x: 83, y: 69, tone: "together" },
-] as const;
 
 const tinhMaSceneAssets = [
   "/3288/tinh-ma/tinh-ma-room-night.png",
@@ -66,24 +57,11 @@ function lyricAt(time: number) {
 
 export default function Experience() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [view, setView] = useState<View>("song");
-  const [focus, setFocus] = useState<string>("tinhma");
-  const [activeSong, setActiveSong] = useState<SongId>("tinhma");
   const [mode, setMode] = useState<Mode>("world");
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(282.906);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPanel, setMenuPanel] = useState<"root" | "about" | "upcoming">("root");
-
-  const focused = useMemo(() => nodes.find((node) => node.id === focus) ?? nodes[3], [focus]);
-  const isTinhMa = activeSong === "tinhma";
-
-  useEffect(() => {
-    if (activeSong !== "tinhma" && audioRef.current) {
-      audioRef.current.pause(); setPlaying(false);
-    }
-  }, [activeSong]);
 
   useEffect(() => {
     const images = tinhMaSceneAssets.map((src) => {
@@ -105,70 +83,32 @@ export default function Experience() {
   }, []);
 
   async function togglePlay() {
-    if (!isTinhMa) return;
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) { await audio.play(); } else { audio.pause(); }
+    if (audio.paused) await audio.play();
+    else audio.pause();
   }
 
-  function enterWorld(song: SongId) {
-    setActiveSong(song); setFocus(song); setMode("world"); setView("song");
-  }
+  const jump = (target: number, shouldPlay: boolean) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = target;
+    if (shouldPlay) void audio.play();
+    else audio.pause();
+  };
 
-  function selectFocus(id: string) {
-    setFocus(id);
-    if (id === "tinhma") setActiveSong("tinhma");
-    if (id === "hills") setActiveSong("hills");
-  }
-
-  return (
-    <main data-tinh-ma-world className={`experience ${view === "song" ? "is-song" : "is-universe"} ${isTinhMa ? "theme-tinhma" : "theme-hills"}`}>
-      <audio ref={audioRef} src="/3288/tinh-ma/tinh-ma.mp3" preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
-      <header className="topbar">
-        <button className="brand" onClick={() => setView("universe")} aria-label="Về bản đồ 3288">3288</button>
-        {view === "universe" ? <nav className="lenses"><button className="active">KHÁM PHÁ</button><button>CHỦ ĐỀ</button><button>THỜI GIAN</button></nav> : <button className="world-back" onClick={() => setView("universe")}>← NHỮNG THẾ GIỚI</button>}
-        <button className={`menu ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen} onClick={() => { setMenuOpen((open) => !open); setMenuPanel("root"); }}><span /><span /><span /></button>
-      </header>
-
-      {menuOpen && <aside className="site-menu" aria-label="Danh mục 3288" onClick={() => setMenuOpen(false)}>
-        <div className="site-menu-inner" onClick={(event) => event.stopPropagation()}>
-        <button className="site-menu-close" aria-label="Đóng menu" onClick={() => setMenuOpen(false)}>×</button>
-        <div className="site-menu-index">3288 · MENU</div>
-        <nav>
-          <button onClick={() => { setView("universe"); setMenuOpen(false); }}><b>01</b><span>TRANG CHỦ<small>Những thế giới</small></span></button>
-          <button onClick={() => { setView("universe"); selectFocus("tinhma"); setMenuOpen(false); }}><b>02</b><span>BÀI HÁT<small>Đi vào từng thế giới</small></span></button>
-          <button className={menuPanel === "about" ? "active" : ""} onClick={() => setMenuPanel("about")}><b>03</b><span>3288 LÀ GÌ?<small>Một bài hát là một thế giới</small></span></button>
-          <button className={menuPanel === "upcoming" ? "active" : ""} onClick={() => setMenuPanel("upcoming")}><b>04</b><span>THỨ GÌ SẮP TỚI?<small>Những thế giới đang hình thành</small></span></button>
-        </nav>
-        {menuPanel === "about" && <div className="site-menu-note"><p>3288 là một universe để nghe, nhìn và bước vào thế giới riêng của từng bài hát.</p></div>}
-        {menuPanel === "upcoming" && <div className="site-menu-note"><p>Qua Những Ngọn Đồi · Những Khu Rừng Mơ · các artifact và bản nháp chưa phát hành.</p></div>}
-        </div>
-      </aside>}
-
-      {view === "universe" ? <Universe focus={focus} selectFocus={selectFocus} focused={focused} enterWorld={enterWorld} /> : isTinhMa ? <TinhMaWorld mode={mode} setMode={setMode} playing={playing} time={time} duration={duration} togglePlay={togglePlay} jump={(target, shouldPlay) => { const audio = audioRef.current; if (!audio) return; audio.currentTime = target; if (shouldPlay) void audio.play(); else audio.pause(); }} /> : <HillsWorld setMode={setMode} />}
-
-      <Player isTinhMa={isTinhMa} playing={playing} time={time} duration={duration} compact={view === "song"} togglePlay={togglePlay} seek={(value) => { if (audioRef.current) audioRef.current.currentTime = value; }} enterWorld={() => enterWorld(activeSong)} />
-    </main>
-  );
+  return <main data-tinh-ma-world className="experience is-song theme-tinhma">
+    <audio ref={audioRef} src="/3288/tinh-ma/tinh-ma.mp3" preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+    <header className="topbar">
+      <Link className="brand" href="/3288" aria-label="Về bản đồ 3288">3288</Link>
+      <Link className="world-back" href="/3288">← NHỮNG THẾ GIỚI</Link>
+      <button className={`menu ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button>
+    </header>
+    <WorldMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    <TinhMaWorld mode={mode} setMode={setMode} playing={playing} time={time} duration={duration} togglePlay={togglePlay} jump={jump} />
+    <Player isTinhMa playing={playing} time={time} duration={duration} compact togglePlay={togglePlay} seek={(value) => { if (audioRef.current) audioRef.current.currentTime = value; }} enterWorld={() => undefined} />
+  </main>;
 }
-
-function Universe({ focus, selectFocus, focused, enterWorld }: { focus: string; selectFocus: (id: string) => void; focused: (typeof nodes)[number]; enterWorld: (song: SongId) => void }) {
-  const available = focused.id === "hills" || focused.id === "tinhma";
-  const ghost = focused.id === "tinhma";
-  return <section className="universe" aria-label="Bản đồ những thế giới âm nhạc">
-    <div className="universe-copy"><p>MỘT BÀI HÁT</p><p>LÀ MỘT THẾ GIỚI.</p></div>
-    <svg className="connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M17 24 C28 19, 36 18, 45 19"/><path d="M45 19 C60 17, 70 23, 79 28"/><path d="M17 24 C25 43, 38 53, 52 58"/><path className={focus === "tinhma" ? "lit ghost-line" : "lit"} d="M45 19 C48 34, 50 47, 52 58"/><path d="M52 58 C66 52, 70 38, 79 28"/><path d="M22 70 C34 62, 42 59, 52 58"/><path d="M52 58 C64 67, 73 70, 83 69"/></svg>
-    {nodes.map((node) => <button key={node.id} className={`node node-${node.tone} ${focus === node.id ? "focused" : ""}`} style={{left:`${node.x}%`,top:`${node.y}%`}} onClick={() => selectFocus(node.id)}><span className="node-art"><i/></span><span className="node-title">{node.title}</span></button>)}
-    <aside className={`focus-card ${available ? "visible" : ""} ${ghost ? "ghost-card" : ""}`}>
-      <p className="eyebrow">{ghost ? "3288 x TRIPPY S · 04:43" : "2026 · FOLK / CINEMATIC"}</p>
-      <h1>{ghost ? <>TÌNH MA</> : <>QUA NHỮNG<br/>NGỌN ĐỒI</>}</h1>
-      <p>{ghost ? "Em không còn ở đây. Nhưng tình yêu ấy vẫn biết cách quay về." : "Ba người bạn. Một hành trình không cần đến đích."}</p>
-      <button onClick={() => enterWorld(ghost ? "tinhma" : "hills")}>BƯỚC VÀO THẾ GIỚI <span>→</span></button>
-    </aside>
-    <p className="drag-hint">KÉO · CHẠM · KHÁM PHÁ</p>
-  </section>;
-}
-
 function TinhMaWorld({ mode, setMode, playing, time, duration, togglePlay, jump }: { mode: Mode; setMode: (m: Mode) => void; playing: boolean; time: number; duration: number; togglePlay: () => void; jump: (target: number, shouldPlay: boolean) => void }) {
   const phase = time < 21 ? "dormant" : time < 63 ? "presence" : time < 89 ? "trees-one" : time < 113 ? "street" : time < 192 ? "duality" : time < 218 ? "trees-two" : time < 242 ? "leaves" : "resolution";
   const currentLyric = lyricAt(time).cue?.line ?? lyricCues[0].line;
@@ -211,8 +151,6 @@ function TinhMaLyrics({time}: {time: number}) {
   return <div className="tm-panel tm-lyrics" onClick={(event) => event.stopPropagation()}><p className="eyebrow">NHỮNG MẢNH NHẬT KÝ · {cue ? `LỜI ${cue.pass}` : "MỞ ĐẦU"}</p><div className="tm-lyric-stream">{visible.map((item) => <p key={`${item.at}-${item.line}`} className={item === cue ? "bright" : ""}><time>{Math.floor(item.at/60).toString().padStart(2,"0")}:{(item.at%60).toString().padStart(2,"0")}</time><span>{item.line}</span></p>)}</div></div>;
 }
 function Archive() { return <div className="tm-panel tm-archive" onClick={(event) => event.stopPropagation()}><p className="eyebrow">GHI CHÚ NGUYÊN BẢN</p><h2>Một trải nghiệm kép</h2><p>Bài hát kể về một chàng trai sống biệt lập tại căn nhà ngoại ô. Vào những đêm mưa, ký ức tình cũ trở lại lúc như căm phẫn, lúc như thương nhớ.</p><dl><div><dt>PRODUCTION</dt><dd>Trippy S</dd></div><div><dt>ÂM THANH</dt><dd>EDM · E minor · ~112 BPM</dd></div><div><dt>TRẠNG THÁI</dt><dd>Câu chuyện MV từng được hình dung nhưng chưa thực hiện</dd></div></dl><blockquote>“Tình yêu đôi khi mang con tim ra làm trò chơi.”</blockquote></div>; }
-
-function HillsWorld({ setMode }: { setMode: (m: Mode) => void }) { return <section className="song-world"><div className="mountain-bg"/><div className="mist mist-a"/><div className="world-content"><div className="song-title"><p className="eyebrow">THẾ GIỚI 04 · 2026</p><h1>QUA NHỮNG<br/>NGỌN ĐỒI</h1><p>Ba người bạn. Một hành trình không cần đến đích.</p></div></div><nav className="song-tabs"><button onClick={()=>setMode("lyrics")}>LỜI BÀI HÁT</button><button className="active">THẾ GIỚI</button><button>HẬU TRƯỜNG</button></nav></section>; }
 
 function Player({isTinhMa,playing,time,duration,compact,togglePlay,seek,enterWorld}:{isTinhMa:boolean;playing:boolean;time:number;duration:number;compact:boolean;togglePlay:()=>void;seek:(v:number)=>void;enterWorld:()=>void}) {
   const progress = isTinhMa ? Math.min(100,(time/duration)*100 || 0) : 31;

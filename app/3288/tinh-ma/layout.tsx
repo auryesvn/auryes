@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import "./tinh-ma.css";
-
 const canonicalUrl = "https://auryes.vn/3288/tinh-ma";
 
 export const metadata: Metadata = {
