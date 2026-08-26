@@ -1,8 +1,9 @@
-import { Lora } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import "./coffee.css";
 
-const coffeeSerif = Lora({
+const coffeeSerif = Newsreader({
   subsets: ["latin", "vietnamese"],
+  axes: ["opsz"],
   display: "swap",
   variable: "--font-coffee-serif",
 });

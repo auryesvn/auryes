@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type FormEvent, Fragment, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import {
   ADDRESS_MODES,
@@ -27,19 +27,22 @@ import {
 } from "@/lib/coffee-result-presentation";
 
 import CoffeeCover from "./coffee-cover";
+import CoffeeFrame, { COFFEE_PAPER_PATTERN } from "./coffee-frame";
+import {
+  buildCoffeeInsightPresentation,
+  COFFEE_INITIAL_UI_STATE,
+  coffeeSubmissionIsLocked,
+  isCoffeeRealityCheckEligible,
+  type CoffeeInsightInput,
+  type CoffeeSendState,
+} from "./coffee-result-model";
+import CoffeeResultScreen from "./coffee-result-screen";
 
 const ADDRESS_LABELS: Record<AddressMode, string> = {
   ban_minh: "Bạn / mình",
   cau_minh: "Cậu / mình",
   anh_em: "Anh / em 👀",
 };
-const REALITY_CHECK = {
-  eyebrow: "Reality check :))",
-  title: "Lý thuyết với thực tế đôi khi hơi khác nhau.",
-  body: "Có những chuyện lúc chưa yêu nghe rất dễ. Vào đúng tình huống rồi mới biết mình phản ứng thế nào :))",
-  cta: "▶ Xem một ví dụ rất đời",
-  videoId: "XoLoGpo3psk",
-} as const;
 const VERDICTS: Record<VerdictKey, { title: string; paragraphs: string[] }> = {
   uncertain: {
     title: COFFEE_VERDICT_TITLES.uncertain,
@@ -142,28 +145,13 @@ const PROFILES: Record<ProfileKey, ProfileCopy> = {
 };
 
 type Stage = "intro" | "address" | "questions" | "identity" | "result";
-type SendState = "idle" | "sending" | "sent" | "failed";
 
-const paperPattern =
-  "bg-[#f4efe5] [background-image:radial-gradient(circle,rgba(49,40,31,0.13)_0.65px,transparent_0.75px)] [background-size:5px_5px]";
 const eyebrow =
   "text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-[#766e63]";
 const focus =
   "outline-none focus-visible:ring-2 focus-visible:ring-[#b72c24] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4efe5]";
 const answerClass =
   "coffee-answer flex min-h-14 w-full items-start gap-4 rounded-2xl border px-4 py-4 text-left text-[0.95rem] leading-6 transition-colors duration-150 motion-reduce:transition-none";
-
-function Frame({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="min-h-svh bg-[#ded5c5] text-[#171411] selection:bg-[#b72c24] selection:text-white">
-      <div
-        className={`relative mx-auto min-h-svh w-full max-w-md overflow-hidden shadow-[0_0_55px_rgba(45,36,28,0.13)] ${paperPattern}`}
-      >
-        {children}
-      </div>
-    </main>
-  );
-}
 
 export default function CoffeeQuiz() {
   const [stage, setStage] = useState<Stage>("intro");
@@ -173,30 +161,8 @@ export default function CoffeeQuiz() {
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
   const [formError, setFormError] = useState("");
-  const [sendState, setSendState] = useState<SendState>("idle");
-  const [realityCheckOpen, setRealityCheckOpen] = useState(false);
-  const realityCheckDialogRef = useRef<HTMLDialogElement>(null);
-  const realityCheckTriggerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const dialog = realityCheckDialogRef.current;
-    if (!dialog || !realityCheckOpen) return;
-    const trigger = realityCheckTriggerRef.current;
-    const previousOverflow = document.body.style.overflow;
-    dialog.setAttribute("aria-label", REALITY_CHECK.title);
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setRealityCheckOpen(false);
-    };
-    dialog.showModal();
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      if (dialog.open) dialog.close();
-      trigger?.focus();
-    };
-  }, [realityCheckOpen]);
+  const [sendState, setSendState] = useState<CoffeeSendState>("idle");
+  const submissionInFlightRef = useRef(false);
 
   useEffect(() => {
     if (stage === "intro") return;
@@ -229,19 +195,20 @@ export default function CoffeeQuiz() {
   }
 
   function restart() {
-    setStage("intro");
-    setAddressMode(null);
-    setQuestionIndex(0);
-    setAnswers({});
-    setName("");
-    setInstagram("");
-    setFormError("");
-    setSendState("idle");
-    setRealityCheckOpen(false);
+    setStage(COFFEE_INITIAL_UI_STATE.stage);
+    setAddressMode(COFFEE_INITIAL_UI_STATE.addressMode);
+    setQuestionIndex(COFFEE_INITIAL_UI_STATE.questionIndex);
+    setAnswers(COFFEE_INITIAL_UI_STATE.answers);
+    setName(COFFEE_INITIAL_UI_STATE.name);
+    setInstagram(COFFEE_INITIAL_UI_STATE.instagram);
+    setFormError(COFFEE_INITIAL_UI_STATE.formError);
+    setSendState(COFFEE_INITIAL_UI_STATE.sendState);
   }
 
   async function submit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
+    if (submissionInFlightRef.current || coffeeSubmissionIsLocked(sendState))
+      return;
     if (!addressMode || Object.keys(answers).length !== COFFEE_QUESTIONS.length)
       return;
     const normalizedName = name.trim().replace(/\s+/g, " ");
@@ -258,6 +225,7 @@ export default function CoffeeQuiz() {
       setFormError("Instagram này có vẻ chưa đúng.");
       return;
     }
+    submissionInFlightRef.current = true;
     setFormError("");
     setStage("result");
     setSendState("sending");
@@ -276,12 +244,14 @@ export default function CoffeeQuiz() {
       setSendState(response.ok ? "sent" : "failed");
     } catch {
       setSendState("failed");
+    } finally {
+      submissionInFlightRef.current = false;
     }
   }
 
   if (stage === "intro") {
     return (
-      <Frame>
+      <CoffeeFrame>
         <div className="coffee-stage-enter pb-[max(2rem,env(safe-area-inset-bottom))]">
           <header className="relative h-[14.5rem] overflow-hidden">
             <CoffeeCover />
@@ -293,7 +263,7 @@ export default function CoffeeQuiz() {
               <span>Coffee / 01</span>
             </div>
             <div
-              className={`absolute -bottom-7 left-1/2 h-14 w-[116%] -translate-x-1/2 rounded-[50%_50%_0_0/100%_100%_0_0] [background-position:0_calc(-14.5rem+1.75rem)] ${paperPattern}`}
+              className={`absolute -bottom-7 left-1/2 h-14 w-[116%] -translate-x-1/2 rounded-[50%_50%_0_0/100%_100%_0_0] [background-position:0_calc(-14.5rem+1.75rem)] ${COFFEE_PAPER_PATTERN}`}
               aria-hidden="true"
             />
           </header>
@@ -353,13 +323,13 @@ export default function CoffeeQuiz() {
             </div>
           </aside>
         </div>
-      </Frame>
+      </CoffeeFrame>
     );
   }
 
   if (stage === "address") {
     return (
-      <Frame>
+      <CoffeeFrame>
         <div className="coffee-stage-enter flex min-h-svh flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
           <header className="flex items-center justify-between">
             <button
@@ -398,7 +368,7 @@ export default function CoffeeQuiz() {
             </div>
           </section>
         </div>
-      </Frame>
+      </CoffeeFrame>
     );
   }
 
@@ -406,7 +376,7 @@ export default function CoffeeQuiz() {
     const question = COFFEE_QUESTIONS[questionIndex];
     const progress = questionIndex + 1;
     return (
-      <Frame>
+      <CoffeeFrame>
         <div
           key={question.id}
           className="coffee-stage-enter min-h-svh px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6"
@@ -475,13 +445,13 @@ export default function CoffeeQuiz() {
             </div>
           </section>
         </div>
-      </Frame>
+      </CoffeeFrame>
     );
   }
 
   if (stage === "identity") {
     return (
-      <Frame>
+      <CoffeeFrame>
         <div className="coffee-stage-enter flex min-h-svh flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6">
           <header className="flex min-h-11 items-center justify-between gap-4">
             <button
@@ -538,13 +508,14 @@ export default function CoffeeQuiz() {
             )}
             <button
               type="submit"
-              className={`${focus} coffee-primary mt-7 min-h-14 w-full rounded-xl bg-[#171411] px-6 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#fff9ed] transition-colors motion-reduce:transition-none`}
+              disabled={coffeeSubmissionIsLocked(sendState)}
+              className={`${focus} coffee-primary disabled:cursor-not-allowed disabled:opacity-60 mt-7 min-h-14 w-full rounded-xl bg-[#171411] px-6 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[#fff9ed] transition-colors motion-reduce:transition-none`}
             >
               Xem kết quả
             </button>
           </form>
         </div>
-      </Frame>
+      </CoffeeFrame>
     );
   }
 
@@ -599,173 +570,48 @@ export default function CoffeeQuiz() {
       result,
       verdictSupportKind,
     );
+    const supportInsight: CoffeeInsightInput | null = verdictSupport
+      ? {
+          key: `support:${verdictSupportKind}`,
+          heading: adapt(verdictSupport.title),
+          body: adapt(verdictSupport.body),
+        }
+      : null;
+    const profileInsights: CoffeeInsightInput[] = visibleProfileKeys.map(
+      (key) => {
+        const copy = observationCopy(key);
+        return {
+          key: `profile:${key}`,
+          profileKey: key,
+          heading: adapt(copy.title),
+          body: adapt(copy.body),
+          showRealityCheck: isCoffeeRealityCheckEligible(
+            key,
+            completeAnswers.jealousy_boundary,
+          ),
+        };
+      },
+    );
+    const presentedInsights = buildCoffeeInsightPresentation(
+      supportInsight,
+      profileInsights,
+    );
 
     return (
-      <Frame>
-        <div className="coffee-stage-enter px-5 pb-[max(3rem,env(safe-area-inset-bottom))] pt-8">
-          <header>
-            <p className={`${eyebrow} text-[#9f3029]`}>
-              Auryes / kết quả của bạn
-            </p>
-            <p className="mt-2 text-sm text-[#857b6e]">{name.trim()}</p>
-          </header>
-          <section className="mt-8">
-            <h1 className="[font-family:var(--font-coffee-serif)] text-[clamp(3rem,13vw,4.3rem)] font-medium leading-[0.94] tracking-[-0.05em]">
-              {verdict.title}
-            </h1>
-            <div className="mt-7 space-y-3 text-[0.95rem] leading-7 text-[#655d54]">
-              <p>{uncertainFirst}</p>
-              {verdict.paragraphs.slice(1).map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-12">
-            <p className={eyebrow}>Qua mấy câu vừa rồi</p>
-            <div className="mt-5 space-y-4">
-              {verdictSupport && (
-                <article className="rounded-2xl border border-[#cfc3b3] bg-[#faf6ee] p-5 [background-image:none]">
-                  <h2 className="[font-family:var(--font-coffee-serif)] text-[1.6rem] font-medium leading-tight tracking-[-0.025em]">
-                    {adapt(verdictSupport.title)}
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-[#756d62]">
-                    {adapt(verdictSupport.body)}
-                  </p>
-                </article>
-              )}
-              {visibleProfileKeys.map((key) => {
-                const copy = observationCopy(key);
-                const showRealityCheck =
-                  key === "limits" &&
-                  ["A", "B", "D"].includes(completeAnswers.jealousy_boundary);
-                return (
-                  <Fragment key={key}>
-                    <article className="rounded-2xl border border-[#d8cdbc] bg-[#faf6ee] p-5 [background-image:none]">
-                      <h2 className="[font-family:var(--font-coffee-serif)] text-[1.55rem] font-medium leading-tight tracking-[-0.025em]">
-                        {adapt(copy.title)}
-                      </h2>
-                      <p className="mt-3 text-sm leading-6 text-[#756d62]">
-                        {adapt(copy.body)}
-                      </p>
-                    </article>
-                    {showRealityCheck && (
-                      <aside className="rounded-2xl border border-[#d8cdbc] bg-[#efe6d9] p-5 [background-image:none]">
-                        <p className={`${eyebrow} text-[#9f3029]`}>
-                          {REALITY_CHECK.eyebrow}
-                        </p>
-                        <h3
-                          id="reality-check-title"
-                          className="mt-3 [font-family:var(--font-coffee-serif)] text-xl font-medium leading-snug"
-                        >
-                          {REALITY_CHECK.title}
-                        </h3>
-                        <p className="mt-3 text-sm leading-6 text-[#756d62]">
-                          {REALITY_CHECK.body}
-                        </p>
-                        <button
-                          ref={realityCheckTriggerRef}
-                          type="button"
-                          onClick={() => setRealityCheckOpen(true)}
-                          className={`${focus} mt-4 min-h-11 border-b border-[#786a5a] py-2 text-left text-sm font-medium`}
-                        >
-                          {REALITY_CHECK.cta}
-                        </button>
-                      </aside>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          </section>
-
-          <aside
-            aria-live="polite"
-            className="mt-6 rounded-2xl border border-[#d8cdbc] bg-[#faf6ee] px-5 py-4 text-sm text-[#756d62] [background-image:none]"
-          >
-            {sendState === "sending" && <p>Đang gửi cho Kai…</p>}
-            {sendState === "sent" && (
-              <p className="text-[#52634b]">Kai nhận được rồi :)</p>
-            )}
-            {sendState === "failed" && (
-              <div>
-                <p>Chưa gửi được, nhưng kết quả của bạn vẫn ở đây.</p>
-                <button
-                  type="button"
-                  onClick={() => submit()}
-                  className={`${focus} coffee-secondary mt-3 min-h-11 rounded-xl border border-[#b9ad9e] px-4 font-medium`}
-                >
-                  Thử gửi lại
-                </button>
-              </div>
-            )}
-          </aside>
-
-          <section className="mt-8 rounded-2xl border border-[#cfc3b3] bg-[#efe6d9] px-5 py-6 text-center [background-image:none]">
-            <p className="text-sm leading-6 text-[#655d54]">
-              Bạn đã để lại một chút về mình.
-              <br />
-              Đến lượt mình nhé.
-            </p>
-            <a
-              href="https://auryes.vn/kai?context=coffee"
-              className={`${focus} coffee-primary mt-5 flex min-h-14 w-full items-center justify-center rounded-xl bg-[#171411] px-5 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#fff9ed] transition-colors motion-reduce:transition-none`}
-            >
-              Làm quen với Kai →
-            </a>
-          </section>
-
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={restart}
-              className={`${focus} coffee-secondary min-h-12 w-full rounded-xl border border-transparent bg-transparent px-5 text-sm font-medium text-[#655d54] underline decoration-[#a99c8c] underline-offset-4`}
-            >
-              Chơi lại
-            </button>
-          </div>
-        </div>
-        {realityCheckOpen && (
-          <dialog
-            ref={realityCheckDialogRef}
-            aria-labelledby="reality-check-title"
-            onCancel={(event) => {
-              event.preventDefault();
-              setRealityCheckOpen(false);
-            }}
-            onClick={(event) => {
-              if (event.target === event.currentTarget)
-                setRealityCheckOpen(false);
-            }}
-            className="m-auto max-h-none max-w-none bg-transparent p-0 text-[#fff9ed] backdrop:bg-black/85"
-          >
-            <div className="flex max-h-[calc(100dvh-2rem)] flex-col items-end gap-3">
-              <button
-                type="button"
-                aria-label="Đóng video"
-                onClick={() => setRealityCheckOpen(false)}
-                className="min-h-11 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#fff9ed]"
-              >
-                Đóng ×
-              </button>
-              <div className="aspect-[9/16] w-[min(90vw,22.5rem,calc((100dvh-7rem)*9/16))] overflow-hidden bg-black">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${REALITY_CHECK.videoId}`}
-                  title="Reality check: lý thuyết với thực tế đôi khi hơi khác nhau"
-                  className="size-full border-0"
-                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </dialog>
-        )}
-      </Frame>
+      <CoffeeResultScreen
+        name={name.trim()}
+        verdictKey={result.verdictKey}
+        title={verdict.title}
+        summary={[uncertainFirst, ...verdict.paragraphs.slice(1)]}
+        insights={presentedInsights}
+        sendState={sendState}
+        onRetry={() => submit()}
+        onRestart={restart}
+      />
     );
   }
-
   return (
-    <Frame>
+    <CoffeeFrame>
       <section className="flex min-h-svh flex-col items-start justify-center px-5 py-12">
         <div className="w-full rounded-2xl border border-[#d8cdbc] bg-[#faf6ee] p-6 [background-image:none]">
           <p className={`${eyebrow} text-[#9f3029]`}>Auryes / Coffee</p>
@@ -785,6 +631,6 @@ export default function CoffeeQuiz() {
           </button>
         </div>
       </section>
-    </Frame>
+    </CoffeeFrame>
   );
 }

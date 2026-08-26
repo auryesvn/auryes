@@ -30,3 +30,29 @@
     border-color: #70675c;
   }
 }
+
+@keyframes coffee-status-progress {
+  0% {
+    transform: translateX(-72%);
+  }
+  100% {
+    transform: translateX(72%);
+  }
+}
+
+.coffee-status-progress::after {
+  content: "";
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: #6f6457;
+  animation: coffee-status-progress 1.25s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coffee-status-progress::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.55;
+  }
+}
