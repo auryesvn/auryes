@@ -200,3 +200,14 @@
   [data-tinh-ma-world] .catalogue .drag-hint{bottom:190px}
 }
 @media(prefers-reduced-motion:reduce){[data-tinh-ma-world] .catalogue-node,[data-tinh-ma-world] .catalogue-node .node-art img,[data-tinh-ma-world] .catalogue-focus-art img{transition:none}}
+/* Leave the fixed 3288 controls reachable while the global return-context bar is present. */
+body:has([data-context-return-bar]) [data-tinh-ma-world]{--context-return-offset:calc(5rem + env(safe-area-inset-bottom))}
+body:has([data-context-return-bar]) [data-tinh-ma-world] .player.compact{bottom:calc(14px + var(--context-return-offset))}
+body:has([data-context-return-bar]) [data-tinh-ma-world] .tm-tabs{bottom:calc(84px + var(--context-return-offset))}
+@media(max-width:800px){
+  body:has([data-context-return-bar]) [data-tinh-ma-world] .player.compact{bottom:calc(8px + var(--context-return-offset))}
+  body:has([data-context-return-bar]) [data-tinh-ma-world] .tm-tabs{bottom:calc(102px + var(--context-return-offset))}
+  body:has([data-context-return-bar]) [data-tinh-ma-world] .catalogue-scroll{bottom:calc(210px + var(--context-return-offset))}
+  body:has([data-context-return-bar]) [data-tinh-ma-world] .catalogue-focus{bottom:calc(34px + var(--context-return-offset))}
+  body:has([data-context-return-bar]) [data-tinh-ma-world] .catalogue .drag-hint{bottom:calc(190px + var(--context-return-offset))}
+}

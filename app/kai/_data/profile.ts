@@ -12,6 +12,7 @@ export const kaiProfile = {
   projects: {
     mbmc: "https://mbmc.vn/?context=kai",
     auryes: "https://auryes.vn/?context=kai",
+    project3288: "https://3288.site/?context=kai",
   },
   vcard: "/kai/kai.vcf",
   canonical: "https://auryes.vn/kai",
