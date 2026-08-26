@@ -4,7 +4,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "auryes:return-context";
-const HISTORY_KEY = "__auryesReturnContext";
 const RETURN_CONTEXTS = {
   kai: {
     label: "Quay lại thẻ Kai",
@@ -18,43 +17,21 @@ function isReturnContext(value: string | null): value is ReturnContext {
   return value !== null && value in RETURN_CONTEXTS;
 }
 
-function referrerIsKai() {
-  if (!document.referrer) return false;
-
-  try {
-    const referrer = new URL(document.referrer);
-    return referrer.origin === "https://auryes.vn" && referrer.pathname === "/kai";
-  } catch {
-    return false;
-  }
-}
-
 export default function ContextReturnBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryContext = searchParams.get("context");
   const [context, setContext] = useState<ReturnContext | null>(null);
-  const isSuppressedRoute =
-    pathname === "/kai" || pathname === "/3288" || pathname.startsWith("/3288/");
+  const isSuppressedRoute = pathname === "/kai";
 
   useEffect(() => {
     let cancelled = false;
     let nextContext: ReturnContext | null = null;
 
-    const is3288Host = window.location.hostname.toLowerCase() === "3288.site";
-
-    if (!isSuppressedRoute && !is3288Host) {
+    if (!isSuppressedRoute) {
       try {
         if (isReturnContext(queryContext)) {
           sessionStorage.setItem(STORAGE_KEY, queryContext);
-
-          if (referrerIsKai()) {
-            history.replaceState(
-              { ...history.state, [HISTORY_KEY]: queryContext },
-              "",
-            );
-          }
-
           nextContext = queryContext;
         } else {
           const storedContext = sessionStorage.getItem(STORAGE_KEY);
@@ -88,19 +65,21 @@ export default function ContextReturnBar() {
   };
 
   const returnToContext = () => {
-    const currentContext = context;
-    const arrivedFromKai =
-      history.state?.[HISTORY_KEY] === currentContext ||
-      (queryContext === currentContext && referrerIsKai());
+    clearContext();
+    location.assign(config.returnUrl);
+  };
 
+  const dismissContext = () => {
     clearContext();
 
-    if (arrivedFromKai) {
-      history.back();
-      return;
-    }
-
-    location.assign(config.returnUrl);
+    const params = new URLSearchParams(location.search);
+    params.delete("context");
+    const query = params.toString();
+    history.replaceState(
+      history.state,
+      "",
+      `${location.pathname}${query ? `?${query}` : ""}${location.hash}`,
+    );
   };
 
   return (
@@ -109,7 +88,7 @@ export default function ContextReturnBar() {
         aria-hidden="true"
         className="h-[calc(5rem+env(safe-area-inset-bottom))] shrink-0"
       />
-      <aside className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/10 bg-[#171411] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-[#fff9ed] shadow-[0_-10px_30px_rgba(23,20,17,0.18)] motion-reduce:transition-none">
+      <aside data-context-return-bar className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/10 bg-[#171411] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 text-[#fff9ed] shadow-[0_-10px_30px_rgba(23,20,17,0.18)] motion-reduce:transition-none">
         <div className="mx-auto flex w-full max-w-5xl items-center gap-3">
           <button
             type="button"
@@ -120,7 +99,7 @@ export default function ContextReturnBar() {
           </button>
           <button
             type="button"
-            onClick={clearContext}
+            onClick={dismissContext}
             aria-label="Đóng thanh quay lại"
             className="flex size-11 shrink-0 items-center justify-center rounded-lg text-xl font-light leading-none outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#fff9ed] motion-reduce:transition-none"
           >

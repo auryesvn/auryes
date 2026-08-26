@@ -215,6 +215,31 @@ export default function KaiPage() {
                 </span>
                 <ArrowUpRightIcon className={arrowClassName} />
               </a>
+
+              <a
+                href={kaiProfile.projects.project3288}
+                aria-label="Mở website 3288"
+                className={`${focus} group grid min-h-28 grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-4 border-b border-[#d8cdbc] py-5`}
+              >
+                <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-[#090909]">
+                  <Image
+                    src="/kai/3288-logo.png"
+                    width={44}
+                    height={20}
+                    alt=""
+                    className="h-5 w-11 object-contain"
+                  />
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-sm tracking-[0.12em]">
+                    3288
+                  </strong>
+                  <span className="mt-1.5 block text-sm leading-5 text-[#756d62]">
+                    Những điều khó nói, mình viết thành nhạc
+                  </span>
+                </span>
+                <ArrowUpRightIcon className={arrowClassName} />
+              </a>
             </div>
 
             <h2 className={`${eyebrow} mt-14`}>Tìm tớ:</h2>
