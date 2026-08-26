@@ -701,23 +701,30 @@ export default function CoffeeQuiz() {
             )}
           </aside>
 
-          <div className="mt-8 grid gap-3">
+          <section className="mt-8 rounded-2xl border border-[#cfc3b3] bg-[#efe6d9] px-5 py-6 text-center [background-image:none]">
+            <p className="text-sm leading-6 text-[#655d54]">
+              Bạn đã để lại một chút về mình.
+              <br />
+              Đến lượt mình nhé.
+            </p>
+            <a
+              href="https://auryes.vn/kai?context=coffee"
+              className={`${focus} coffee-primary mt-5 flex min-h-14 w-full items-center justify-center rounded-xl bg-[#171411] px-5 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#fff9ed] transition-colors motion-reduce:transition-none`}
+            >
+              Làm quen với Kai →
+            </a>
+          </section>
+
+          <div className="mt-4">
             <button
               type="button"
               onClick={restart}
-              className={`${focus} coffee-secondary min-h-14 rounded-xl border border-[#8f8374] bg-transparent px-5 text-[0.7rem] font-semibold uppercase tracking-[0.14em]`}
+              className={`${focus} coffee-secondary min-h-12 w-full rounded-xl border border-transparent bg-transparent px-5 text-sm font-medium text-[#655d54] underline decoration-[#a99c8c] underline-offset-4`}
             >
               Chơi lại
             </button>
-            <a
-              href="https://auryes.vn/kai"
-              className={`${focus} flex min-h-12 items-center justify-center text-sm font-medium text-[#655d54] underline decoration-[#a99c8c] underline-offset-4`}
-            >
-              Xem thẻ của Kai
-            </a>
           </div>
         </div>
-
         {realityCheckOpen && (
           <dialog
             ref={realityCheckDialogRef}
