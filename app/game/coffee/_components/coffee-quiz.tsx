@@ -287,7 +287,9 @@ export default function CoffeeQuiz() {
             <CoffeeCover />
             <div className="absolute inset-0 bg-black/25" aria-hidden="true" />
             <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 pt-6 text-[0.58rem] font-semibold uppercase tracking-[0.22em] text-white/90">
-              <span>Auryes</span>
+              <span>
+                <a href="https://auryes.vn">Auryes</a>
+              </span>
               <span>Coffee / 01</span>
             </div>
             <div
