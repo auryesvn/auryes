@@ -221,13 +221,13 @@ export default function KaiPage() {
                 aria-label="Mở website 3288"
                 className={`${focus} group grid min-h-28 grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-4 border-b border-[#d8cdbc] py-5`}
               >
-                <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-[#090909]">
+                <span className="relative flex size-14 items-center justify-center overflow-hidden rounded-full bg-[#090909]">
                   <Image
                     src="/kai/3288-logo.png"
-                    width={48}
-                    height={22}
+                    width={68}
+                    height={31}
                     alt=""
-                    className="h-auto w-12 object-contain"
+                    className="absolute left-1/2 top-1/2 h-auto w-[68px] max-w-none shrink-0 -translate-x-1/2 -translate-y-1/2 object-contain"
                   />
                 </span>
                 <span className="min-w-0">
