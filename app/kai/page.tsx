@@ -224,10 +224,10 @@ export default function KaiPage() {
                 <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-[#090909]">
                   <Image
                     src="/kai/3288-logo.png"
-                    width={44}
-                    height={20}
+                    width={48}
+                    height={22}
                     alt=""
-                    className="h-5 w-11 object-contain"
+                    className="h-auto w-12 object-contain"
                   />
                 </span>
                 <span className="min-w-0">
