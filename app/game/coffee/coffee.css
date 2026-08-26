@@ -1,0 +1,32 @@
+@keyframes coffee-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.coffee-stage-enter {
+  animation: coffee-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coffee-stage-enter {
+    animation: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .coffee-answer:hover {
+    border-color: #8f8374;
+  }
+  .coffee-primary:hover {
+    background-color: #302a25;
+  }
+  .coffee-secondary:hover {
+    border-color: #70675c;
+  }
+}

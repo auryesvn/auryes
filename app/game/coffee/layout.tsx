@@ -1,4 +1,5 @@
 import { Lora } from "next/font/google";
+import "./coffee.css";
 
 const coffeeSerif = Lora({
   subsets: ["latin", "vietnamese"],
