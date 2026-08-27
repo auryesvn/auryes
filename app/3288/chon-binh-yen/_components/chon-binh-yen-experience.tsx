@@ -2,18 +2,26 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { WorldMenu } from "../../_components/world-menu";
 import { audioTimelineProgress, clampAudioTime } from "../../_lib/audio-timeline";
 import type { NamespaceBasePath } from "../../_lib/host";
 import {
   CHON_BINH_YEN_DURATION,
+  activeChapterAt,
   activeCueAt,
   activeVisualStateAt,
+  chonBinhYenChapters,
   chonBinhYenCues,
   chonBinhYenVisualStates,
 } from "./chon-binh-yen-cues";
+import {
+  finishSceneCrossfade,
+  resolveSceneRequest,
+  startSceneCrossfade,
+  type SceneTransitionState,
+} from "./scene-transition";
 
 type Mode = "world" | "lyrics" | "meaning" | "archive";
 type PlaybackState = "idle" | "loading" | "buffering" | "playing" | "paused" | "error";
@@ -30,6 +38,96 @@ function PlayIcon({ playing }: { playing: boolean }) {
   </svg>;
 }
 
+function usePrefersReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return reducedMotion;
+}
+
+function SceneCrossfade({ desiredAsset, nextAsset }: { desiredAsset: string; nextAsset: string | null }) {
+  const reducedMotion = usePrefersReducedMotion();
+  const desiredAssetRef = useRef(desiredAsset);
+  const [scene, setScene] = useState<SceneTransitionState>({
+    currentAsset: chonBinhYenVisualStates[0].asset,
+    outgoingAsset: null,
+    phase: "idle",
+  });
+  const pendingAsset = desiredAsset === scene.currentAsset ? null : desiredAsset;
+
+  useLayoutEffect(() => {
+    desiredAssetRef.current = desiredAsset;
+  }, [desiredAsset]);
+
+  useEffect(() => {
+    if (!nextAsset || nextAsset === scene.currentAsset || nextAsset === pendingAsset) return;
+    const image = new window.Image();
+    image.decoding = "async";
+    image.src = frameSrc(nextAsset);
+    void image.decode().catch(() => undefined);
+  }, [nextAsset, pendingAsset, scene.currentAsset]);
+
+  useEffect(() => {
+    if (scene.phase !== "prepared") return;
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => setScene((current) => startSceneCrossfade(current)));
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [scene.phase, scene.currentAsset]);
+
+  useEffect(() => {
+    if (scene.phase !== "crossfading") return;
+    const timeout = window.setTimeout(() => setScene((current) => finishSceneCrossfade(current)), 1600);
+    return () => window.clearTimeout(timeout);
+  }, [scene.phase, scene.currentAsset]);
+
+  async function markIncomingReady(
+    event: React.SyntheticEvent<HTMLImageElement>,
+    asset: string,
+  ) {
+    const image = event.currentTarget;
+    try {
+      await image.decode();
+    } catch {
+      if (!image.complete || image.naturalWidth === 0) return;
+    }
+    if (asset !== desiredAssetRef.current) return;
+    setScene((current) => resolveSceneRequest(current, {
+      asset,
+      desiredAsset: desiredAssetRef.current,
+      ready: true,
+      reducedMotion,
+    }));
+  }
+
+  return <div className={`cby-scene is-${scene.phase}`}>
+    {scene.outgoingAsset && <div className="cby-scene-layer cby-scene-outgoing" aria-hidden="true">
+      <Image className="cby-scene-blur" src={frameSrc(scene.outgoingAsset)} alt="" fill sizes="100vw"/>
+      <Image className="cby-scene-image" src={frameSrc(scene.outgoingAsset)} alt="" fill sizes="100vw"/>
+    </div>}
+    <div className="cby-scene-layer cby-scene-incoming">
+      <Image className="cby-scene-blur" src={frameSrc(scene.currentAsset)} alt="" fill sizes="100vw" aria-hidden="true"/>
+      <Image className="cby-scene-image" src={frameSrc(scene.currentAsset)} alt="Khung hình trong thế giới Chốn Bình Yên" fill sizes="100vw" loading="eager"/>
+    </div>
+    {pendingAsset && <div className="cby-scene-layer cby-scene-pending" aria-hidden="true">
+      <Image className="cby-scene-blur" src={frameSrc(pendingAsset)} alt="" fill sizes="100vw"/>
+      <Image className="cby-scene-image" src={frameSrc(pendingAsset)} alt="" fill sizes="100vw" loading="eager" onLoad={(event) => void markIncomingReady(event, pendingAsset)}/>
+    </div>}
+    <div className="cby-vignette"/>
+  </div>;
+}
+
 export default function ChonBinhYenExperience({ basePath }: { basePath: NamespaceBasePath }) {
   const homeHref = basePath || "/";
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -40,16 +138,6 @@ export default function ChonBinhYenExperience({ basePath }: { basePath: Namespac
   const [duration, setDuration] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const images = chonBinhYenVisualStates.map(({ asset }) => {
-      const image = new window.Image();
-      image.decoding = "async";
-      image.src = frameSrc(asset);
-      void image.decode().catch(() => undefined);
-      return image;
-    });
-    return () => images.forEach((image) => { image.src = ""; });
-  }, []);
 
   useEffect(() => () => {
     playAttemptRef.current += 1;
@@ -100,6 +188,9 @@ export default function ChonBinhYenExperience({ basePath }: { basePath: Namespac
 
   const actualDuration = duration && Number.isFinite(duration) ? duration : null;
   const visual = activeVisualStateAt(time);
+  const visualIndex = chonBinhYenVisualStates.indexOf(visual);
+  const nextVisualAsset = chonBinhYenVisualStates[visualIndex + 1]?.asset ?? null;
+  const activeChapter = activeChapterAt(time);
   const cue = activeCueAt(time).cue;
   const playing = playbackState === "playing";
   const loading = playbackState === "loading" || playbackState === "buffering";
@@ -125,11 +216,8 @@ export default function ChonBinhYenExperience({ basePath }: { basePath: Namespac
       onError={(event) => failPlayback(event.currentTarget)}
     />
 
-    <div className="cby-scene" aria-live="polite">
-      <Image className="cby-scene-blur" src={frameSrc(visual.asset)} alt="" fill priority sizes="100vw" aria-hidden="true" />
-      <Image className="cby-scene-image" src={frameSrc(visual.asset)} alt="Khung hình trong thế giới Chốn Bình Yên" fill priority sizes="100vw" />
-      <div className="cby-vignette" />
-    </div>
+    <SceneCrossfade desiredAsset={visual.asset} nextAsset={nextVisualAsset}/>
+
 
     <header className="topbar">
       <Link className="brand" href={homeHref} aria-label="Về bản đồ 3288">3288</Link>
@@ -157,8 +245,8 @@ export default function ChonBinhYenExperience({ basePath }: { basePath: Namespac
       </section>
     </div>}
 
-    <nav className="cby-state-nav" aria-label="Mười hai chương của Chốn Bình Yên">
-      {chonBinhYenVisualStates.map((state, index) => <button key={state.at} className={state === visual ? "active" : ""} onClick={() => seek(state.at, state.at > 0)} aria-label={`${index + 1}. ${state.chapter}`} title={state.chapter}><span>{String(index + 1).padStart(2, "0")}</span></button>)}
+    <nav className="cby-state-nav" aria-label="Tám chương của Chốn Bình Yên">
+      {chonBinhYenChapters.map((chapter, index) => <button key={chapter.id} className={chapter === activeChapter ? "active" : ""} onClick={() => seek(chapter.at, chapter.at > 0)} aria-label={`${index + 1}. ${chapter.label}`} title={chapter.label}><span>{String(index + 1).padStart(2, "0")}</span></button>)}
     </nav>
 
     <nav className="song-tabs tm-tabs cby-tabs" aria-label="Nội dung Chốn Bình Yên">

@@ -3,8 +3,10 @@ import test from "node:test";
 
 import {
   CHON_BINH_YEN_DURATION,
+  activeChapterAt,
   activeCueAt,
   activeVisualStateAt,
+  chonBinhYenChapters,
   chonBinhYenCues,
   chonBinhYenVisualStates,
 } from "./chon-binh-yen-cues.ts";
@@ -26,4 +28,24 @@ test("selectors change on exact editorial boundaries", () => {
   assert.equal(activeVisualStateAt(165.99).id, "relapse");
   assert.equal(activeVisualStateAt(166).id, "dawn");
   assert.equal(activeVisualStateAt(CHON_BINH_YEN_DURATION).id, "star");
+});
+test("eight narrative chapters map onto canonical visual cue boundaries", () => {
+  assert.equal(chonBinhYenVisualStates.length, 12);
+  assert.deepEqual(
+    chonBinhYenChapters.map(({ at, label }) => [at, label]),
+    [
+      [0, "Căn phòng"],
+      [34, "Đóa hồng"],
+      [50, "Nhật ký"],
+      [85, "Mặt đất"],
+      [116, "Vệt cánh"],
+      [166, "Bình minh"],
+      [231, "Rời mặt đất"],
+      [249, "Ngủ ngoan"],
+    ],
+  );
+  assert.equal(activeChapterAt(49.99).label, "Đóa hồng");
+  assert.equal(activeChapterAt(198.3).label, "Bình minh");
+  assert.equal(activeChapterAt(238.3).label, "Rời mặt đất");
+  assert.equal(activeChapterAt(CHON_BINH_YEN_DURATION).label, "Ngủ ngoan");
 });
