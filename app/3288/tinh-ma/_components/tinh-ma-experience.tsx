@@ -7,6 +7,13 @@ import { useEffect, useRef, useState } from "react";
 import { WorldMenu } from "../../_components/world-menu";
 import type { NamespaceBasePath } from "../../_lib/host";
 type Mode = "world" | "lyrics" | "archive";
+type PlaybackState =
+  | "idle"
+  | "loading"
+  | "buffering"
+  | "playing"
+  | "paused"
+  | "error";
 
 const tinhMaSceneAssets = [
   "/3288/tinh-ma/tinh-ma-room-night.png",
@@ -58,11 +65,13 @@ function lyricAt(time: number) {
 
 export default function Experience({ basePath }: { basePath: NamespaceBasePath }) {
   const homeHref = basePath || "/";
+  const audioSrc = `${basePath}/tinh-ma/tinh-ma.mp3`;
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playAttemptRef = useRef(0);
   const [mode, setMode] = useState<Mode>("world");
-  const [playing, setPlaying] = useState(false);
+  const [playbackState, setPlaybackState] = useState<PlaybackState>("idle");
   const [time, setTime] = useState(0);
-  const [duration, setDuration] = useState(282.906);
+  const [duration, setDuration] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -76,47 +85,108 @@ export default function Experience({ basePath }: { basePath: NamespaceBasePath }
     return () => images.forEach((image) => { image.src = ""; });
   }, []);
 
-  useEffect(() => () => {
+  useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-    audio.pause();
-    audio.removeAttribute("src");
-    audio.load();
+    return () => {
+      playAttemptRef.current += 1;
+      audio?.pause();
+    };
   }, []);
 
-  async function togglePlay() {
+  function reportPlaybackFailure(audio: HTMLAudioElement, error?: unknown) {
+    setPlaybackState("error");
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Tình Ma audio] Playback failed", {
+        errorName: error instanceof DOMException ? error.name : undefined,
+        errorMessage: error instanceof Error ? error.message : undefined,
+        mediaErrorCode: audio.error?.code ?? null,
+        currentSrc: audio.currentSrc,
+        networkState: audio.networkState,
+        readyState: audio.readyState,
+      });
+    }
+  }
+
+  async function startPlayback() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) await audio.play();
-    else audio.pause();
+    const attempt = ++playAttemptRef.current;
+    setPlaybackState("loading");
+    if (audio.networkState === HTMLMediaElement.NETWORK_EMPTY || audio.error || !audio.currentSrc) audio.load();
+    try {
+      await audio.play();
+    } catch (error) {
+      if (attempt === playAttemptRef.current) reportPlaybackFailure(audio, error);
+      else if (process.env.NODE_ENV !== "production") {
+        console.info("[Tình Ma audio] Playback request was superseded", {
+          errorName: error instanceof DOMException ? error.name : undefined,
+          currentSrc: audio.currentSrc,
+          networkState: audio.networkState,
+          readyState: audio.readyState,
+        });
+      }
+    }
+  }
+
+  function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (["playing", "loading", "buffering"].includes(playbackState)) {
+      playAttemptRef.current += 1;
+      audio.pause();
+      setPlaybackState("paused");
+      return;
+    }
+    void startPlayback();
   }
 
   const jump = (target: number, shouldPlay: boolean) => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || duration === null) return;
     audio.currentTime = target;
-    if (shouldPlay) void audio.play();
-    else audio.pause();
+    if (shouldPlay) void startPlayback();
+    else {
+      playAttemptRef.current += 1;
+      audio.pause();
+    }
   };
 
   return <main data-tinh-ma-world className="experience is-song theme-tinhma">
-    <audio ref={audioRef} src="/tinh-ma/tinh-ma.mp3" preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+    <audio
+      ref={audioRef}
+      src={audioSrc}
+      preload="auto"
+      onLoadStart={() => { if (playbackState !== "idle") setPlaybackState("loading"); }}
+      onLoadedMetadata={(event) => {
+        const nextDuration = event.currentTarget.duration;
+        setDuration(Number.isFinite(nextDuration) && nextDuration > 0 ? nextDuration : null);
+      }}
+      onCanPlay={() => { if (playbackState === "buffering") setPlaybackState("loading"); }}
+      onPlaying={() => setPlaybackState("playing")}
+      onWaiting={() => { if (!audioRef.current?.paused) setPlaybackState("buffering"); }}
+      onStalled={() => { if (!audioRef.current?.paused) setPlaybackState("buffering"); }}
+      onPause={() => setPlaybackState("paused")}
+      onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
+      onEnded={(event) => { setTime(event.currentTarget.duration); setPlaybackState("paused"); }}
+      onError={(event) => reportPlaybackFailure(event.currentTarget)}
+    />
     <header className="topbar">
       <Link className="brand" href={homeHref} aria-label="Về bản đồ 3288">3288</Link>
       <Link className="world-back" href={homeHref}>← NHỮNG THẾ GIỚI</Link>
       <button className={`menu ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Đóng menu" : "Mở menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}><span /><span /><span /></button>
     </header>
     <WorldMenu basePath={basePath} open={menuOpen} onClose={() => setMenuOpen(false)} />
-    <TinhMaWorld mode={mode} setMode={setMode} playing={playing} time={time} duration={duration} togglePlay={togglePlay} jump={jump} />
-    <Player isTinhMa playing={playing} time={time} duration={duration} compact togglePlay={togglePlay} seek={(value) => { if (audioRef.current) audioRef.current.currentTime = value; }} enterWorld={() => undefined} />
+    <TinhMaWorld mode={mode} setMode={setMode} playbackState={playbackState} time={time} duration={duration} togglePlay={togglePlay} jump={jump} />
+    <Player isTinhMa playbackState={playbackState} time={time} duration={duration} compact togglePlay={togglePlay} seek={(value) => { if (audioRef.current && duration !== null) audioRef.current.currentTime = value; }} enterWorld={() => undefined} />
   </main>;
 }
-function TinhMaWorld({ mode, setMode, playing, time, duration, togglePlay, jump }: { mode: Mode; setMode: (m: Mode) => void; playing: boolean; time: number; duration: number; togglePlay: () => void; jump: (target: number, shouldPlay: boolean) => void }) {
+function TinhMaWorld({ mode, setMode, playbackState, time, duration, togglePlay, jump }: { mode: Mode; setMode: (m: Mode) => void; playbackState: PlaybackState; time: number; duration: number | null; togglePlay: () => void; jump: (target: number, shouldPlay: boolean) => void }) {
+  const playing = playbackState === "playing";
   const phase = time < 21 ? "dormant" : time < 63 ? "presence" : time < 89 ? "trees-one" : time < 113 ? "street" : time < 192 ? "duality" : time < 218 ? "trees-two" : time < 242 ? "leaves" : "resolution";
   const currentLyric = lyricAt(time).cue?.line ?? lyricCues[0].line;
   const dualityProgress = Math.max(0, Math.min(1, (time - 113) / 79));
   const balance = 10 + dualityProgress * 80;
-  const remaining = Math.max(0, duration - time);
+  const remaining = Math.max(0, (duration ?? time) - time);
   const settle = phase === "resolution" ? Math.min(1, remaining / 4) : 1;
   const resolutionX = Math.sin(time * .62) * 10 * settle;
   const resolutionY = Math.cos(time * .47) * 6 * settle;
@@ -127,7 +197,7 @@ function TinhMaWorld({ mode, setMode, playing, time, duration, togglePlay, jump 
     {phase === "duality" && <div className="tm-duality-scene" aria-hidden="true"/>}
     <div className="tm-art-stack"><Image src="/3288/tinh-ma/tinh-ma-artwork.png" alt="Artwork Tình Ma" fill priority sizes="(max-width: 800px) 66vw, 35vw"/><Image aria-hidden="true" alt="" src="/3288/tinh-ma/tinh-ma-artwork.png" fill sizes="(max-width: 800px) 66vw, 35vw"/><Image aria-hidden="true" alt="" src="/3288/tinh-ma/tinh-ma-artwork.png" fill sizes="(max-width: 800px) 66vw, 35vw"/></div>
     {mode === "world" && <>
-      {phase === "dormant" && <div className="tm-intro"><p className="eyebrow">3288 x TRIPPY S · 04:43</p><h1>TÌNH MA</h1><p>Em không còn ở đây.<br/>Nhưng tình yêu ấy vẫn biết cách quay về.</p><button className="tm-play" onClick={togglePlay}>▶</button><small>CHƯA PHÁT</small></div>}
+      {phase === "dormant" && <div className="tm-intro"><p className="eyebrow">3288 x TRIPPY S · 04:43</p><h1>TÌNH MA</h1><p>Em không còn ở đây.<br/>Nhưng tình yêu ấy vẫn biết cách quay về.</p><button className="tm-play" onClick={togglePlay} aria-label={playbackState === "playing" ? "Tạm dừng Tình Ma" : "Phát Tình Ma"}>{playbackState === "playing" ? "Ⅱ" : playbackState === "loading" || playbackState === "buffering" ? "…" : "▶"}</button><small>{playbackState === "error" ? "KHÔNG PHÁT ĐƯỢC · THỬ LẠI" : playbackState === "loading" || playbackState === "buffering" ? "ĐANG TẢI…" : playbackState === "playing" ? "ĐANG PHÁT" : "CHƯA PHÁT"}</small></div>}
       {phase === "presence" && <div className="tm-presence"><span>NHẬT KÝ · LỜI 1</span><p key={currentLyric}>{currentLyric}</p><i key={`${currentLyric}-ghost`}>{currentLyric}</i></div>}
       {phase === "trees-one" && <ChorusScene variant="trees-one" chapter="III — HÀNG CÂY · LỜI 1" lyric={currentLyric}/>}
       {phase === "street" && <ChorusScene variant="street" chapter="IV — KHU PHỐ · LỜI 1" lyric={currentLyric}/>}
@@ -154,8 +224,12 @@ function TinhMaLyrics({time}: {time: number}) {
 }
 function Archive() { return <div className="tm-panel tm-archive" onClick={(event) => event.stopPropagation()}><p className="eyebrow">GHI CHÚ NGUYÊN BẢN</p><h2>Một trải nghiệm kép</h2><p>Bài hát kể về một chàng trai sống biệt lập tại căn nhà ngoại ô. Vào những đêm mưa, ký ức tình cũ trở lại lúc như căm phẫn, lúc như thương nhớ.</p><dl><div><dt>PRODUCTION</dt><dd>Trippy S</dd></div><div><dt>ÂM THANH</dt><dd>EDM · E minor · ~112 BPM</dd></div><div><dt>TRẠNG THÁI</dt><dd>Câu chuyện MV từng được hình dung nhưng chưa thực hiện</dd></div></dl><blockquote>“Tình yêu đôi khi mang con tim ra làm trò chơi.”</blockquote></div>; }
 
-function Player({isTinhMa,playing,time,duration,compact,togglePlay,seek,enterWorld}:{isTinhMa:boolean;playing:boolean;time:number;duration:number;compact:boolean;togglePlay:()=>void;seek:(v:number)=>void;enterWorld:()=>void}) {
-  const progress = isTinhMa ? Math.min(100,(time/duration)*100 || 0) : 31;
+function Player({isTinhMa,playbackState,time,duration,compact,togglePlay,seek,enterWorld}:{isTinhMa:boolean;playbackState:PlaybackState;time:number;duration:number | null;compact:boolean;togglePlay:()=>void;seek:(v:number)=>void;enterWorld:()=>void}) {
+  const hasDuration = duration !== null && Number.isFinite(duration) && duration > 0;
+  const progress = isTinhMa && hasDuration ? Math.min(100,(time/duration)*100) : 0;
   const format=(n:number)=>`${Math.floor(n/60).toString().padStart(2,"0")}:${Math.floor(n%60).toString().padStart(2,"0")}`;
-  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"/><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span>{isTinhMa?"3288 x TRIPPY S":"3288"}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa}>{playing?"Ⅱ":"▶"}</button><button className="timeline" aria-label="Tua bài hát" onClick={(e)=>{if(isTinhMa){const r=e.currentTarget.getBoundingClientRect();seek(((e.clientX-r.left)/r.width)*duration)}}}><i style={{width:`${progress}%`}}/><b style={{left:`${progress}%`}}/></button><span className="time">{isTinhMa?`${format(time)} / ${format(duration)}`:"01:28 / 04:07"}</span>{!compact&&<button className="enter-mini" onClick={enterWorld}>BƯỚC VÀO →</button>}</footer>;
+  const loading = playbackState === "loading" || playbackState === "buffering";
+  const status = playbackState === "error" ? "Không phát được nhạc · Thử lại" : loading ? "ĐANG TẢI…" : isTinhMa ? "3288 x TRIPPY S" : "3288";
+  const playLabel = playbackState === "playing" ? "Tạm dừng Tình Ma" : playbackState === "error" ? "Thử phát lại Tình Ma" : "Phát Tình Ma";
+  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"/><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span aria-live="polite">{status}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa} aria-label={playLabel} aria-busy={loading}>{playbackState === "playing"?"Ⅱ":loading?"…":"▶"}</button><button className="timeline" aria-label="Tua bài hát" disabled={!isTinhMa || !hasDuration} onClick={(e)=>{if(isTinhMa&&hasDuration){const r=e.currentTarget.getBoundingClientRect();seek(((e.clientX-r.left)/r.width)*duration)}}}><i style={{width:`${progress}%`}}/><b style={{left:`${progress}%`}}/></button><span className="time">{isTinhMa?`${format(time)} / ${hasDuration ? format(duration) : "--:--"}`:"01:28 / 04:07"}</span>{!compact&&<button className="enter-mini" onClick={enterWorld}>BƯỚC VÀO →</button>}</footer>;
 }
