@@ -32,20 +32,15 @@ export function formatCoffeeSubmissionMessage(input: CoffeeNotification) {
   return `☕ <b>Coffee · submission mới</b>\n\n<b>${escapeTelegramHtml(input.name)}</b>${instagramLine}\nXưng hô: ${ADDRESS_LABELS[input.addressMode]}\n\n<b>${COFFEE_VERDICT_TITLES[input.result.verdictKey]}</b>\n\n${answerTranscript}${supportLine}\n\n🕒 ${timestamp}`;
 }
 
-export async function sendCoffeeSubmissionNotification(input: CoffeeNotification) {
+export async function sendCoffeeSubmissionNotification(
+  input: CoffeeNotification,
+  signal: AbortSignal,
+) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) {
-    console.warn("[coffee] Telegram notification skipped: configuration absent");
-    return;
-  }
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: formatCoffeeSubmissionMessage(input), parse_mode: "HTML", disable_web_page_preview: true }), signal: AbortSignal.timeout(5_000) });
-    const payload: unknown = await response.json().catch(() => null);
-    const telegramOk = typeof payload === "object" && payload !== null && "ok" in payload && payload.ok === true;
-    if (!response.ok || !telegramOk) console.warn(`[coffee] Telegram notification failed: response ${response.status}`);
-  } catch (error) {
-    const category = error instanceof Error && error.name === "TimeoutError" ? "timeout" : "request error";
-    console.warn(`[coffee] Telegram notification failed: ${category}`);
-  }
+  if (!token || !chatId) throw new Error("telegram_configuration");
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text: formatCoffeeSubmissionMessage(input), parse_mode: "HTML", disable_web_page_preview: true }), signal });
+  const payload: unknown = await response.json().catch(() => null);
+  const telegramOk = typeof payload === "object" && payload !== null && "ok" in payload && payload.ok === true;
+  if (!response.ok || !telegramOk) throw new Error("telegram_response");
 }
