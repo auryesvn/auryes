@@ -11,8 +11,10 @@ test("player uses host-aware native streaming controls", () => {
   assert.doesNotMatch(source, /setPointerCapture|releasePointerCapture/);
 });
 
-test("world uses all twelve approved visual states", () => {
-  assert.match(source, /chonBinhYenVisualStates\.map/);
+test("world retains twelve internal shots behind eight chapter controls", () => {
   assert.match(source, /activeVisualStateAt\(time\)/);
+  assert.match(source, /chonBinhYenVisualStates\[visualIndex \+ 1\]/);
+  assert.match(source, /chonBinhYenChapters\.map/);
+  assert.match(source, /activeChapterAt\(time\)/);
   assert.match(source, /activeCueAt\(time\)/);
 });

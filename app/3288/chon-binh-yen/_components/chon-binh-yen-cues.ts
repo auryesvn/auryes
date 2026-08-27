@@ -42,6 +42,24 @@ export const chonBinhYenVisualStates = [
   { at: 249, id: "star", chapter: "XII — NGỦ NGOAN", asset: "frame-12-single-star.png" },
 ] as const;
 
+export const chonBinhYenChapters = [
+  { at: 0, id: "room", label: "Căn phòng" },
+  { at: 34, id: "rose", label: "Đóa hồng" },
+  { at: 50, id: "journal", label: "Nhật ký" },
+  { at: 85, id: "grounded", label: "Mặt đất" },
+  { at: 116, id: "trace", label: "Vệt cánh" },
+  { at: 166, id: "dawn", label: "Bình minh" },
+  { at: 231, id: "lift", label: "Rời mặt đất" },
+  { at: 249, id: "star", label: "Ngủ ngoan" },
+] as const;
+
+export function activeChapterAt(time: number) {
+  let chapter: (typeof chonBinhYenChapters)[number] = chonBinhYenChapters[0];
+  for (const candidate of chonBinhYenChapters) {
+    if (time >= candidate.at) chapter = candidate;
+  }
+  return chapter;
+}
 export function activeCueAt(time: number) {
   let index = -1;
   for (let cursor = 0; cursor < chonBinhYenCues.length; cursor += 1) {

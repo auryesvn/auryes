@@ -215,9 +215,18 @@ body:has([data-context-return-bar]) [data-tinh-ma-world] .tm-tabs{bottom:calc(84
 /* Chốn Bình Yên — a readable night that opens into dawn, not a Tình Ma skin. */
 [data-chon-binh-yen-world]{--cby-blue:#09273b;--cby-sky:#78a9bf;--cby-ivory:#f4f0e4;--cby-gold:#e6c68a;background:#061622;color:var(--cby-ivory)}
 [data-chon-binh-yen-world] .cby-scene{position:absolute;inset:0;overflow:hidden;background:#061622}
+[data-chon-binh-yen-world] .cby-scene-layer{position:absolute;inset:0;opacity:1;transition:opacity 1.6s ease}
+[data-chon-binh-yen-world] .cby-scene-outgoing{z-index:1}
+[data-chon-binh-yen-world] .cby-scene-incoming{z-index:2}
+[data-chon-binh-yen-world] .cby-scene-pending{z-index:0;opacity:0;pointer-events:none}
+[data-chon-binh-yen-world] .cby-scene.is-prepared .cby-scene-incoming{opacity:0}
+[data-chon-binh-yen-world] .cby-scene.is-crossfading .cby-scene-outgoing{opacity:0}
+[data-chon-binh-yen-world] .cby-scene.is-crossfading .cby-scene-incoming{opacity:1}
 [data-chon-binh-yen-world] .cby-scene-blur{object-fit:cover;filter:blur(28px) brightness(.64) saturate(1.08);transform:scale(1.12)}
-[data-chon-binh-yen-world] .cby-scene-image{object-fit:contain;filter:brightness(.92) saturate(.96);animation:cbySceneReveal .8s ease both}
-[data-chon-binh-yen-world] .cby-vignette{position:absolute;inset:0;background:linear-gradient(90deg,#03121ded 0%,#04131c70 34%,transparent 64%),linear-gradient(0deg,#031019e8 0%,transparent 38%,#020b1280 100%)}
+[data-chon-binh-yen-world] .cby-scene-image{object-fit:contain;filter:brightness(.92) saturate(.96);transform:scale(1);transition:filter 1.6s ease,transform 1.6s ease}
+[data-chon-binh-yen-world] .cby-scene.is-prepared .cby-scene-incoming .cby-scene-image{filter:blur(3px) brightness(.92) saturate(.96);transform:scale(1.015)}
+[data-chon-binh-yen-world] .cby-scene.is-crossfading .cby-scene-incoming .cby-scene-image{filter:brightness(.92) saturate(.96);transform:scale(1)}
+[data-chon-binh-yen-world] .cby-vignette{position:absolute;z-index:3;inset:0;background:linear-gradient(90deg,#03121ded 0%,#04131c70 34%,transparent 64%),linear-gradient(0deg,#031019e8 0%,transparent 38%,#020b1280 100%)}
 [data-chon-binh-yen-world] .topbar{z-index:30}
 [data-chon-binh-yen-world] .cby-copy{position:absolute;z-index:5;left:7vw;top:23%;width:min(500px,39vw);text-shadow:0 3px 24px #000;animation:cbyCopy .65s ease both}
 [data-chon-binh-yen-world] .cby-copy .eyebrow{font-family:var(--font-ui);font-size:9px;letter-spacing:.25em;color:#ddd5bd}
@@ -248,13 +257,25 @@ body:has([data-context-return-bar]) [data-tinh-ma-world] .tm-tabs{bottom:calc(84
 [data-chon-binh-yen-world] .cby-archive-grid img{object-fit:cover}
 [data-chon-binh-yen-world] .cby-archive-grid figcaption{position:absolute;inset:auto 0 0;padding:35px 14px 12px;background:linear-gradient(transparent,#000c);font-family:var(--font-ui);font-size:7px;letter-spacing:.16em}
 [data-chon-binh-yen-world] .cby-archive-note{font-size:15px!important}
-[data-chon-binh-yen-world] .cby-player{z-index:14;border-color:#dce7e933;background:#031019e8}
-[data-chon-binh-yen-world] .cby-player .timeline{background:linear-gradient(90deg,#e9dfc5 var(--progress),#ffffff28 var(--progress))}
+[data-chon-binh-yen-world] .cby-player{z-index:14;width:min(520px,calc(100vw - 48px));height:62px;padding:8px 12px;gap:12px;border-color:#dce7e933;background:#031019e8}
+[data-chon-binh-yen-world] .cby-player .player-art{width:38px;height:38px}
 [data-chon-binh-yen-world] .cby-player .player-art img{object-fit:cover}
-@keyframes cbySceneReveal{from{opacity:.35;filter:blur(8px) brightness(.78)}to{opacity:1;filter:brightness(.92) saturate(.96)}}
+[data-chon-binh-yen-world] .cby-player .player-play{width:36px;height:36px}
+[data-chon-binh-yen-world] .cby-player input.timeline{height:36px;background:transparent}
+[data-chon-binh-yen-world] .cby-player input.timeline::-webkit-slider-runnable-track{height:2px;background:linear-gradient(to right,#e9dfc5 0 var(--progress),#fff3 var(--progress) 100%)}
+[data-chon-binh-yen-world] .cby-player input.timeline::-webkit-slider-thumb{width:10px;height:10px;margin-top:-4px}
+[data-chon-binh-yen-world] .cby-player input.timeline::-moz-range-track{height:2px;background:#fff3}
+[data-chon-binh-yen-world] .cby-player input.timeline::-moz-range-progress{height:2px;background:#e9dfc5}
+[data-chon-binh-yen-world] .cby-player input.timeline::-moz-range-thumb{width:10px;height:10px}
+[data-chon-binh-yen-world] .cby-player .time{font-size:7px;white-space:nowrap}
 @keyframes cbyCopy{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 
 @media(max-width:800px){
+  [data-chon-binh-yen-world]{--tm-player-height:106px}
+  [data-chon-binh-yen-world] .cby-player{height:auto;grid-template-columns:40px minmax(0,1fr) 38px;column-gap:12px;padding:10px 12px}
+  [data-chon-binh-yen-world] .cby-player .player-art{width:40px;height:40px}
+  [data-chon-binh-yen-world] .cby-player .player-play{width:38px;height:38px}
+  [data-chon-binh-yen-world] .cby-player .timeline{height:36px;margin-top:8px}
   [data-chon-binh-yen-world] .cby-scene-image{object-fit:cover;object-position:center}
   [data-chon-binh-yen-world] .cby-vignette{background:linear-gradient(0deg,#031019f2 0%,#03101955 54%,#020b1288 100%)}
   [data-chon-binh-yen-world] .cby-copy{left:7%;right:7%;top:18%;width:auto;text-align:center}
@@ -277,4 +298,4 @@ body:has([data-context-return-bar]) [data-tinh-ma-world] .tm-tabs{bottom:calc(84
   [data-chon-binh-yen-world] .cby-archive-grid{grid-template-columns:1fr}
   [data-chon-binh-yen-world] .cby-archive-grid figure{aspect-ratio:16/10}
 }
-@media(prefers-reduced-motion:reduce){[data-chon-binh-yen-world] .cby-scene-image,[data-chon-binh-yen-world] .cby-copy{animation:none}}
+@media(prefers-reduced-motion:reduce){[data-chon-binh-yen-world] .cby-scene-layer,[data-chon-binh-yen-world] .cby-scene-image{transition:none}[data-chon-binh-yen-world] .cby-copy{animation:none}}
