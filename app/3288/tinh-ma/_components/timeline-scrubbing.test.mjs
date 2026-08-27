@@ -91,3 +91,19 @@ test("host-aware source and native playback lifecycle remain intact", async () =
   assert.match(source, /onWaiting=/);
   assert.match(source, /onError=/);
 });
+test("compact player uses canonical artwork and SVG audio controls", async () => {
+  const source = await readFile(new URL("./tinh-ma-experience.tsx", import.meta.url), "utf8");
+  assert.match(source, /className="player-art"><Image src="\/3288\/tinh-ma\/tinh-ma-artwork\.png" alt="" fill/);
+  assert.match(source, /function AudioControlIcon/);
+  assert.match(source, /aria-hidden="true" className=\{`audio-control-icon/);
+  assert.doesNotMatch(source, /Ⅱ|▶/);
+});
+
+test("compact player grid preserves the 36px scrubbing target", async () => {
+  const css = await readFile(new URL("../../3288.css", import.meta.url), "utf8");
+  assert.match(css, /grid-template-areas:"artwork metadata control" "timeline timeline timeline"/);
+  assert.match(css, /\.player\.compact \.player-art\{grid-area:artwork;width:66px;height:66px\}/);
+  assert.match(css, /\.player\.compact \.player-play\{grid-area:control;width:66px;height:66px/);
+  assert.match(css, /\.player\.compact \.timeline\{grid-area:timeline;[^}]*height:36px/);
+  assert.match(css, /\.player-art img\{object-fit:cover;object-position:center\}/);
+});

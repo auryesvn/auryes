@@ -67,6 +67,11 @@ function lyricAt(time: number) {
   return {index, cue: index >= 0 ? lyricCues[index] : null};
 }
 
+function AudioControlIcon({ playing, large = false }: { playing: boolean; large?: boolean }) {
+  return <svg aria-hidden="true" className={`audio-control-icon ${large ? "large" : ""}`} viewBox="0 0 24 24" fill="none">
+    {playing ? <><path d="M8.5 6.5v11"/><path d="M15.5 6.5v11"/></> : <path className="audio-play-shape" d="m9 6.5 9 5.5-9 5.5Z"/>}
+  </svg>;
+}
 export default function Experience({ basePath }: { basePath: NamespaceBasePath }) {
   const homeHref = basePath || "/";
   const audioSrc = `${basePath}/tinh-ma/tinh-ma.mp3`;
@@ -201,7 +206,7 @@ function TinhMaWorld({ mode, setMode, playbackState, time, duration, togglePlay,
     {phase === "duality" && <div className="tm-duality-scene" aria-hidden="true"/>}
     <div className="tm-art-stack"><Image src="/3288/tinh-ma/tinh-ma-artwork.png" alt="Artwork Tình Ma" fill priority sizes="(max-width: 800px) 66vw, 35vw"/><Image aria-hidden="true" alt="" src="/3288/tinh-ma/tinh-ma-artwork.png" fill sizes="(max-width: 800px) 66vw, 35vw"/><Image aria-hidden="true" alt="" src="/3288/tinh-ma/tinh-ma-artwork.png" fill sizes="(max-width: 800px) 66vw, 35vw"/></div>
     {mode === "world" && <>
-      {phase === "dormant" && <div className="tm-intro"><p className="eyebrow">3288 x TRIPPY S · 04:43</p><h1>TÌNH MA</h1><p>Em không còn ở đây.<br/>Nhưng tình yêu ấy vẫn biết cách quay về.</p><button className="tm-play" onClick={togglePlay} aria-label={playbackState === "playing" ? "Tạm dừng Tình Ma" : "Phát Tình Ma"}>{playbackState === "playing" ? "Ⅱ" : playbackState === "loading" || playbackState === "buffering" ? "…" : "▶"}</button><small>{playbackState === "error" ? "KHÔNG PHÁT ĐƯỢC · THỬ LẠI" : playbackState === "loading" || playbackState === "buffering" ? "ĐANG TẢI…" : playbackState === "playing" ? "ĐANG PHÁT" : "CHƯA PHÁT"}</small></div>}
+      {phase === "dormant" && <div className="tm-intro"><p className="eyebrow">3288 x TRIPPY S · 04:43</p><h1>TÌNH MA</h1><p>Em không còn ở đây.<br/>Nhưng tình yêu ấy vẫn biết cách quay về.</p><button className="tm-play" onClick={togglePlay} aria-label={playbackState === "playing" ? "Tạm dừng Tình Ma" : "Phát Tình Ma"}>{playbackState === "loading" || playbackState === "buffering" ? <span aria-hidden="true">…</span> : <AudioControlIcon playing={playbackState === "playing"} large />}</button><small>{playbackState === "error" ? "KHÔNG PHÁT ĐƯỢC · THỬ LẠI" : playbackState === "loading" || playbackState === "buffering" ? "ĐANG TẢI…" : playbackState === "playing" ? "ĐANG PHÁT" : "CHƯA PHÁT"}</small></div>}
       {phase === "presence" && <div className="tm-presence"><span>NHẬT KÝ · LỜI 1</span><p key={currentLyric}>{currentLyric}</p><i key={`${currentLyric}-ghost`}>{currentLyric}</i></div>}
       {phase === "trees-one" && <ChorusScene variant="trees-one" chapter="III — HÀNG CÂY · LỜI 1" lyric={currentLyric}/>}
       {phase === "street" && <ChorusScene variant="street" chapter="IV — KHU PHỐ · LỜI 1" lyric={currentLyric}/>}
@@ -268,7 +273,7 @@ function Player({isTinhMa,playbackState,time,duration,compact,togglePlay,seek,en
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
 
-  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"/><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span aria-live="polite">{status}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa} aria-label={playLabel} aria-busy={loading}>{playbackState === "playing"?"Ⅱ":loading?"…":"▶"}</button><div
+  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"><Image src="/3288/tinh-ma/tinh-ma-artwork.png" alt="" fill sizes="68px" /></div><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span aria-live="polite">{status}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa} aria-label={playLabel} aria-busy={loading}>{loading ? <span aria-hidden="true">…</span> : <AudioControlIcon playing={playbackState === "playing"} />}</button><div
     className="timeline"
     role="slider"
     aria-label="Tua bài hát"

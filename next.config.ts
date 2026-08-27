@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
         },
         {
           source:
-            "/:path((?!_next$|_next/|api$|api/|3288$|3288/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|manifest\\.webmanifest$|icon\\.|apple-icon\\.).*)",
+            "/:path((?!_next$|_next/|api$|api/|3288$|3288/|favicon\\.ico$|3288-fav\\.ico$|robots\\.txt$|sitemap\\.xml$|manifest\\.webmanifest$|icon\\.|apple-icon\\.).*)",
           has: [{ type: "host", value: "3288.site" }],
           destination: "/3288/:path",
         },
