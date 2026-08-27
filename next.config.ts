@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
         destination: "https://3288.site/tinh-ma",
         permanent: true,
       },
+      {
+        source: "/3288/chon-binh-yen",
+        has: [{ type: "host", value: "3288.site" }],
+        destination: "https://3288.site/chon-binh-yen",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
