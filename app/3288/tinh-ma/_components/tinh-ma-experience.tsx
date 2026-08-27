@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { WorldMenu } from "../../_components/world-menu";
 import type { NamespaceBasePath } from "../../_lib/host";
+import {
+  timelineTimeFromKey,
+  timelineTimeFromPointer,
+} from "./timeline-scrubbing";
 type Mode = "world" | "lyrics" | "archive";
 type PlaybackState =
   | "idle"
@@ -177,7 +181,7 @@ export default function Experience({ basePath }: { basePath: NamespaceBasePath }
     </header>
     <WorldMenu basePath={basePath} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <TinhMaWorld mode={mode} setMode={setMode} playbackState={playbackState} time={time} duration={duration} togglePlay={togglePlay} jump={jump} />
-    <Player isTinhMa playbackState={playbackState} time={time} duration={duration} compact togglePlay={togglePlay} seek={(value) => { if (audioRef.current && duration !== null) audioRef.current.currentTime = value; }} enterWorld={() => undefined} />
+    <Player isTinhMa playbackState={playbackState} time={time} duration={duration} compact togglePlay={togglePlay} seek={(value) => { if (audioRef.current && duration !== null) { audioRef.current.currentTime = value; setTime(value); } }} enterWorld={() => undefined} />
   </main>;
 }
 function TinhMaWorld({ mode, setMode, playbackState, time, duration, togglePlay, jump }: { mode: Mode; setMode: (m: Mode) => void; playbackState: PlaybackState; time: number; duration: number | null; togglePlay: () => void; jump: (target: number, shouldPlay: boolean) => void }) {
@@ -226,10 +230,77 @@ function Archive() { return <div className="tm-panel tm-archive" onClick={(event
 
 function Player({isTinhMa,playbackState,time,duration,compact,togglePlay,seek,enterWorld}:{isTinhMa:boolean;playbackState:PlaybackState;time:number;duration:number | null;compact:boolean;togglePlay:()=>void;seek:(v:number)=>void;enterWorld:()=>void}) {
   const hasDuration = duration !== null && Number.isFinite(duration) && duration > 0;
-  const progress = isTinhMa && hasDuration ? Math.min(100,(time/duration)*100) : 0;
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
+  const activePointerRef = useRef<number | null>(null);
+  const scrubTimeRef = useRef<number | null>(null);
+  const displayedTime = scrubTime ?? time;
+  const progress = isTinhMa && hasDuration ? Math.min(100,Math.max(0,(displayedTime/duration)*100)) : 0;
   const format=(n:number)=>`${Math.floor(n/60).toString().padStart(2,"0")}:${Math.floor(n%60).toString().padStart(2,"0")}`;
   const loading = playbackState === "loading" || playbackState === "buffering";
   const status = playbackState === "error" ? "Không phát được nhạc · Thử lại" : loading ? "ĐANG TẢI…" : isTinhMa ? "3288 x TRIPPY S" : "3288";
   const playLabel = playbackState === "playing" ? "Tạm dừng Tình Ma" : playbackState === "error" ? "Thử phát lại Tình Ma" : "Phát Tình Ma";
-  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"/><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span aria-live="polite">{status}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa} aria-label={playLabel} aria-busy={loading}>{playbackState === "playing"?"Ⅱ":loading?"…":"▶"}</button><button className="timeline" aria-label="Tua bài hát" disabled={!isTinhMa || !hasDuration} onClick={(e)=>{if(isTinhMa&&hasDuration){const r=e.currentTarget.getBoundingClientRect();seek(((e.clientX-r.left)/r.width)*duration)}}}><i style={{width:`${progress}%`}}/><b style={{left:`${progress}%`}}/></button><span className="time">{isTinhMa?`${format(time)} / ${hasDuration ? format(duration) : "--:--"}`:"01:28 / 04:07"}</span>{!compact&&<button className="enter-mini" onClick={enterWorld}>BƯỚC VÀO →</button>}</footer>;
+
+  useEffect(() => () => {
+    activePointerRef.current = null;
+    scrubTimeRef.current = null;
+  }, []);
+
+  const previewPointerTime = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!hasDuration) return null;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const nextTime = timelineTimeFromPointer(event.clientX, rect.left, rect.width, duration);
+    if (nextTime !== null) {
+      scrubTimeRef.current = nextTime;
+      setScrubTime(nextTime);
+    }
+    return nextTime;
+  };
+
+  const finishScrubbing = (event: React.PointerEvent<HTMLDivElement>, commit: boolean) => {
+    if (activePointerRef.current !== event.pointerId) return;
+    if (commit) {
+      const nextTime = previewPointerTime(event) ?? scrubTimeRef.current;
+      if (nextTime !== null) seek(nextTime);
+    }
+    activePointerRef.current = null;
+    scrubTimeRef.current = null;
+    setScrubTime(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  return <footer className={`player ${compact?"compact":""} ${isTinhMa?"tm-player":""}`}><div className="player-art"/><div className="player-meta"><strong>{isTinhMa?"TÌNH MA":"QUA NHỮNG NGỌN ĐỒI"}</strong><span aria-live="polite">{status}</span></div><button className="player-play" onClick={togglePlay} disabled={!isTinhMa} aria-label={playLabel} aria-busy={loading}>{playbackState === "playing"?"Ⅱ":loading?"…":"▶"}</button><div
+    className="timeline"
+    role="slider"
+    aria-label="Tua bài hát"
+    aria-valuemin={0}
+    aria-valuemax={hasDuration ? duration : undefined}
+    aria-valuenow={hasDuration ? displayedTime : undefined}
+    aria-valuetext={hasDuration ? format(displayedTime) : undefined}
+    tabIndex={isTinhMa && hasDuration ? 0 : -1}
+    aria-disabled={!isTinhMa || !hasDuration}
+    onPointerDown={(event) => {
+      if (!isTinhMa || !hasDuration || activePointerRef.current !== null) return;
+      activePointerRef.current = event.pointerId;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      previewPointerTime(event);
+    }}
+    onPointerMove={(event) => {
+      if (activePointerRef.current === event.pointerId) previewPointerTime(event);
+    }}
+    onPointerUp={(event) => finishScrubbing(event, true)}
+    onPointerCancel={(event) => finishScrubbing(event, false)}
+    onLostPointerCapture={(event) => {
+      if (activePointerRef.current !== event.pointerId) return;
+      activePointerRef.current = null;
+      scrubTimeRef.current = null;
+      setScrubTime(null);
+    }}
+    onKeyDown={(event) => {
+      if (!hasDuration) return;
+      const nextTime = timelineTimeFromKey(event.key, displayedTime, duration);
+      if (nextTime === null) return;
+      event.preventDefault();
+      seek(nextTime);
+    }}
+  ><i style={{width:`${progress}%`}}/><b style={{left:`${progress}%`}}/></div><span className="time">{isTinhMa?`${format(displayedTime)} / ${hasDuration ? format(duration) : "--:--"}`:"01:28 / 04:07"}</span>{!compact&&<button className="enter-mini" onClick={enterWorld}>BƯỚC VÀO →</button>}</footer>;
 }
