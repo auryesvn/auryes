@@ -5,7 +5,7 @@ export type CatalogueSong = {
   slug: string;
   artwork: `/3288/catalogue/${string}.jpg`;
   status: CatalogueStatus;
-  route: "/tinh-ma" | null;
+  route: "/tinh-ma" | "/chon-binh-yen" | null;
   position: { x: number; y: number };
 };
 
@@ -21,7 +21,7 @@ export const catalogueSongs = [
   { title: "Tình Ma", slug: "tinh-ma", artwork: "/3288/catalogue/tinh-ma.jpg", status: "live", route: "/tinh-ma", position: { x: 8, y: 50 } },
   { title: "It's A Match", slug: "its-a-match", artwork: "/3288/catalogue/its-a-match.jpg", status: "forming", route: null, position: { x: 25, y: 50 } },
   { title: "Mưa Rơi", slug: "mua-roi", artwork: "/3288/catalogue/mua-roi.jpg", status: "forming", route: null, position: { x: 42, y: 50 } },
-  { title: "Chốn Bình Yên", slug: "chon-binh-yen", artwork: "/3288/catalogue/chon-binh-yen.jpg", status: "forming", route: null, position: { x: 59, y: 50 } },
+  { title: "Chốn Bình Yên", slug: "chon-binh-yen", artwork: "/3288/catalogue/chon-binh-yen.jpg", status: "live", route: "/chon-binh-yen", position: { x: 59, y: 50 } },
   { title: "Đêm Qua Mơ Về Em", slug: "dem-qua-mo-ve-em", artwork: "/3288/catalogue/dem-qua-mo-ve-em.jpg", status: "forming", route: null, position: { x: 76, y: 50 } },
   { title: "Em không trả lời", slug: "em-khong-tra-loi", artwork: "/3288/catalogue/em-khong-tra-loi.jpg", status: "forming", route: null, position: { x: 93, y: 50 } },
   { title: "It's Better", slug: "its-better", artwork: "/3288/catalogue/its-better.jpg", status: "forming", route: null, position: { x: 8, y: 85 } },
