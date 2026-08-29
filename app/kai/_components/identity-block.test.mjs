@@ -38,6 +38,17 @@ test("component renders six configured buttons with semantic accordion and press
   assert.doesNotMatch(component, /selectedIdentity\s*===\s*"seller"/);
 });
 
+test("outer accordion uses a down chevron when closed and rotates it up when open", () => {
+  assert.match(component, /<svg aria-hidden="true"[^>]+className=\{`[^`]+\$\{state\.rolesOpen \? "rotate-180" : ""\}`\}/);
+  assert.match(component, /<path d="m6 9 6 6 6-6" \/>/);
+
+  const expandedState = component.indexOf("aria-expanded={state.rolesOpen}");
+  const outerButtonStart = component.lastIndexOf("<button", expandedState);
+  const outerButtonEnd = component.indexOf("</button>", outerButtonStart);
+  const outerButton = component.slice(outerButtonStart, outerButtonEnd);
+  assert.equal((outerButton.match(/<button/g) ?? []).length, 1);
+});
+
 test("identity CTAs reuse canonical project data and existing project/contact markup remains", () => {
   assert.match(data, /href: kaiProfile\.projects\.mbmc/);
   assert.match(data, /href: kaiProfile\.projects\.auryes/);

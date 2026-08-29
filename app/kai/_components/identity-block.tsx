@@ -76,7 +76,7 @@ export default function IdentityBlock() {
           <span id="kai-identities-title" className="mt-2 block [font-family:var(--font-kai-serif)] text-[1.45rem] font-semibold leading-tight">Có thể gọi Kai là…</span>
         </span>
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-[#171411]" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={`size-5 transition-transform duration-[240ms] motion-reduce:transition-none ${state.rolesOpen ? "rotate-180" : ""}`}><path d="m6 15 6-6 6 6" /></svg>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={`size-5 transition-transform duration-[240ms] motion-reduce:transition-none ${state.rolesOpen ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6" /></svg>
         </span>
       </button>
 
