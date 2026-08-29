@@ -64,7 +64,7 @@ export const kaiIdentities: readonly KaiIdentity[] = [
     label: "Thiết kế quy trình",
     icon: "workflow",
     description:
-      "Kai quan sát workflow, tìm điểm gây chậm hoặc mất thông tin, rồi thiết kế lại thành quy trình rõ ràng hơn và có thể số hóa.",
+      "Kai quan sát quy trình làm việc, tìm điểm gây chậm hoặc mất thông tin, rồi thiết kế lại thành quy trình rõ ràng hơn và có thể số hóa.",
     cta: { kind: "link", label: "Xem MBMC →", href: kaiProfile.projects.mbmc },
   },
   {
@@ -72,6 +72,6 @@ export const kaiIdentities: readonly KaiIdentity[] = [
     label: "Người đào tạo",
     icon: "trainer",
     description:
-      "Kai externalize cách mình làm việc thành protocol, framework và feedback loop để người khác có thể học nhanh hơn trong bán hàng, đàm phán, âm nhạc và thể thao.",
+      "Kai quan sát cách mình học và làm, rồi biến chúng thành những bước rõ ràng để người khác có thể thử, nhận phản hồi và tiến bộ nhanh hơn trong bán hàng, đàm phán, âm nhạc và thể thao.",
   },
 ] as const;
