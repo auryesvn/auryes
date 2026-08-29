@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Lora } from "next/font/google";
 
 import HeroDecorations from "./_components/hero-decorations";
+import IdentityBlock from "./_components/identity-block";
 import ParallaxCover from "./_components/parallax-cover";
 import StickyContactCta from "./_components/sticky-contact-cta";
 import { kaiProfile } from "./_data/profile";
@@ -163,7 +164,11 @@ export default function KaiPage() {
             aria-hidden="true"
           />
           <div className="relative">
-            <h2 className={eyebrow}>Tớ đang làm những gì:</h2>
+            <IdentityBlock />
+
+            <h2 id="kai-projects" className={`${eyebrow} mt-14 scroll-mt-6`}>
+              Tớ đang làm những gì:
+            </h2>
 
             <div className="mt-7 border-t border-[#d8cdbc]">
               <a
